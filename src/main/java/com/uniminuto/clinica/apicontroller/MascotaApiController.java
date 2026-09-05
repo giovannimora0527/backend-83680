@@ -20,4 +20,14 @@ public class MascotaApiController implements MascotaApi {
     public ResponseEntity<List<Mascota>> listarMascotas() throws BadRequestException {
         return ResponseEntity.ok(mascotaService.listarMascotas());
     }
+
+    @Override
+    public ResponseEntity<List<Mascota>> buscarMascotasPorCliente(Long clienteId) throws BadRequestException {
+        return ResponseEntity.ok(mascotaService.listarMascotasPorCliente(clienteId));
+    }
+
+    @Override
+    public ResponseEntity<List<Mascota>> buscarMascotasPorRaza(Integer razaId) throws BadRequestException {
+        return ResponseEntity.ok(mascotaService.listarMascotasPorRaza(razaId));
+    }
 }
