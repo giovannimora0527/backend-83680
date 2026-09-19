@@ -54,6 +54,9 @@ public class Receta implements Serializable {
     @Column(name = "indicaciones", columnDefinition = "text")
     private String indicaciones;
 
+    /**
+    * Fecha y hora de creación del registro de la fórmula médica.
+    */
     @Column(name = "fecha_creacion_registro")
     private LocalDateTime fechaCreacionRegistro;
 }

@@ -1,8 +1,7 @@
 package com.uniminuto.clinica.service.impl;
 
 import com.uniminuto.clinica.entity.Cita;
-import com.uniminuto.clinica.entity.Medico;
-import com.uniminuto.clinica.entity.Paciente;
+import com.uniminuto.clinica.entity.Medico;     
 import com.uniminuto.clinica.model.CitaRq;
 import com.uniminuto.clinica.model.RespuestaRs;
 import com.uniminuto.clinica.repository.CitaRepository;
@@ -33,6 +32,11 @@ public class CitaServiceImpl implements CitaService {
     @Autowired
     private MedicoRepository medicoRepository;
 
+    /**
+    * Lista todas las citas del sistema ordenadas por fecha de forma descendente.
+    *
+    * @return lista de citas ordenadas de la más reciente a la más antigua.
+    */
     @Override
     public List<Cita> listarCitas() {
         return citaRepository.findAllByOrderByFechaHoraDesc();

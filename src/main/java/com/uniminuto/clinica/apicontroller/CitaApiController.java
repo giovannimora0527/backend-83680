@@ -25,11 +25,23 @@ public class CitaApiController implements CitaApi {
     @Autowired
     private CitaService citaService;
 
+    /**
+    * Lista todas las citas del sistema.
+    *
+    * @return listado de citas.
+    */
     @Override
     public ResponseEntity<List<Cita>> listarCitas() {
         return ResponseEntity.ok(this.citaService.listarCitas());
     }
 
+    /**
+    * Lista las citas dentro de un rango de fechas.
+    *
+    * @param fechaIni fecha inicial de la consulta.
+    * @param fechaFin fecha final de la consulta.
+    * @return listado de citas ordenadas de la más reciente a la más antigua.
+    */
     @Override
 public ResponseEntity<List<Cita>> listarCitasPorFecha(
         LocalDateTime fechaIni, LocalDateTime fechaFin) {
@@ -37,11 +49,25 @@ public ResponseEntity<List<Cita>> listarCitasPorFecha(
             this.citaService.listarCitasPorFecha(fechaIni, fechaFin));
 }
 
+    /**
+    * Guarda una nueva cita.
+    *
+    * @param citaRq información de la cita a guardar.
+    * @return respuesta del servicio.
+    * @throws BadRequestException si los datos de la cita no son válidos.
+    */
     @Override
     public ResponseEntity<RespuestaRs> guardarCita(@RequestBody @Valid CitaRq citaRq) throws BadRequestException {
         return ResponseEntity.ok(this.citaService.guardarCita(citaRq));
     }
 
+    /**
+    * Actualiza una cita existente.
+    *
+    * @param citaRq información actualizada de la cita.
+    * @return respuesta del servicio.
+    * @throws BadRequestException si los datos de la cita no son válidos.
+    */
         @Override
     public ResponseEntity<RespuestaRs> actualizarCita(
             @RequestBody @Valid CitaRq citaRq) throws BadRequestException {

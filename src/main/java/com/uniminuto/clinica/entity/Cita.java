@@ -30,19 +30,35 @@ public class Cita implements Serializable {
     @Column(name = "cliente_id")
     private Integer clienteId;
 
-    @Column(name = "fecha_hora")
-    private LocalDateTime fechaHora;
+    /**
+ * Fecha y hora programada para la cita.
+ */
+@Column(name = "fecha_hora")
+private LocalDateTime fechaHora;
 
-    @Column(name = "estado")
-    private String estado;
+/**
+ * Estado actual de la cita.
+ */
+@Column(name = "estado")
+private String estado;
 
-    @Column(name = "motivo")
-    private String motivo;
+/**
+ * Motivo de la cita.
+ */
+@Column(name = "motivo")
+private String motivo;
 
-   @Column(name = "mascota_id")
-   private Integer mascotaId;
+/**
+ * Identificador de la mascota asociada a la cita.
+ */
+@Column(name = "mascota_id")
+private Integer mascotaId;
 
-    @ManyToOne
-    @JoinColumn(name = "medico_id", referencedColumnName = "id")
-    private Medico medico;
+/**
+ * Médico asignado a la cita.
+ */
+@ManyToOne
+@JoinColumn(name = "medico_id", referencedColumnName = "id")
+private Medico medico;
+
 }
