@@ -13,6 +13,7 @@ import java.util.List;
 @RequestMapping("/medicamento")
 public interface MedicamentoApi {
 
+    // Lista todos los medicamentos disponibles.
     @GetMapping(value = "/listar",
             produces = {"application/json"},
             consumes = {"application/json"})

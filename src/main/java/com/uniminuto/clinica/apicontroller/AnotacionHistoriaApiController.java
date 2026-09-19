@@ -14,28 +14,29 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @RestController
+/** Controlador que expone los servicios de anotaciones médicas. */
 public class AnotacionHistoriaApiController implements AnotacionHistoriaApi {
 
     @Autowired
+    /** Servicio con la lógica de anotaciones. */
     private  AnotacionHistoriaService anotacionHistoriaService;
 
-    public AnotacionHistoriaApiController(AnotacionHistoriaService anotacionHistoriaService) {
-        this.anotacionHistoriaService = anotacionHistoriaService;
-    }
-
     @Override
+    /** Recibe y delega la creación de una anotación. */
     public ResponseEntity<MiRespuestaRS> crearAnotacion(AnotacionHistoriaRq anotacionRq)
             throws BadRequestException {
         return ResponseEntity.ok(anotacionHistoriaService.crearAnotacion(anotacionRq));
     }
 
     @Override
+    /** Delega la consulta de anotaciones por fecha. */
     public ResponseEntity<List<AnotacionHistoria>> listarAnotacionesPorFecha(
             LocalDateTime fechaInicial, LocalDateTime fechaFinal) throws BadRequestException {
         return ResponseEntity.ok(anotacionHistoriaService.listarAnotacionesPorFecha(fechaInicial, fechaFinal));
     }
 
     @Override
+    /** Recibe y delega la actualización de una anotación. */
     public ResponseEntity<MiRespuestaRS> actualizarAnotacion(AnotacionHistoriaRq anotacionRq)
             throws BadRequestException {
         return ResponseEntity.ok(anotacionHistoriaService.actualizarAnotacion(anotacionRq));

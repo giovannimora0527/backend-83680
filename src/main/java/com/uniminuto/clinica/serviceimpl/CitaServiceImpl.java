@@ -19,16 +19,22 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
+/** Implementa las operaciones de negocio de las citas. */
 public class CitaServiceImpl implements CitaService {
     @Autowired
+    /** Repositorio de citas. */
     private CitaRepository citaRepository;
     @Autowired
+    /** Repositorio de clientes. */
     private ClienteRepository clienteRepository;
     @Autowired
+    /** Repositorio de mascotas. */
     private MascotaRepository mascotaRepository;
     @Autowired
+    /** Repositorio de médicos. */
     private MedicoRepository medicoRepository;
 
+    /** Recibe los repositorios necesarios para operar. */
     public CitaServiceImpl(CitaRepository citaRepository, ClienteRepository clienteRepository,
                            MascotaRepository mascotaRepository, MedicoRepository medicoRepository) {
         this.citaRepository = citaRepository;
@@ -38,6 +44,7 @@ public class CitaServiceImpl implements CitaService {
     }
 
     @Override
+    // Consulta las citas que pertenecen al rango de fechas recibido.
     public List<Cita> listarCitasPorFecha(LocalDateTime fechaInicial, LocalDateTime fechaFinal)
             throws BadRequestException {
         validarRangoFechas(fechaInicial, fechaFinal);
@@ -45,6 +52,7 @@ public class CitaServiceImpl implements CitaService {
     }
 
     @Override
+    // Valida la solicitud, crea la cita y la guarda en la base de datos.
     public MiRespuestaRS crearCita(CitaRq citaRq) throws BadRequestException {
         validarCita(citaRq);
         Cita cita = new Cita();
@@ -54,6 +62,7 @@ public class CitaServiceImpl implements CitaService {
     }
 
     @Override
+    // Busca la cita existente, actualiza sus datos y guarda los cambios.
     public MiRespuestaRS actualizarCita(CitaRq citaRq) throws BadRequestException {
         validarCita(citaRq);
         if (citaRq.getCitaId() == null) {
@@ -67,6 +76,7 @@ public class CitaServiceImpl implements CitaService {
     }
 
     private void asignarDatos(Cita cita, CitaRq citaRq) throws BadRequestException {
+        // Busca cliente, mascota y médico antes de relacionarlos con la cita.
         Cliente cliente = clienteRepository.findById(citaRq.getClienteId())
                 .orElseThrow(() -> new BadRequestException("Cliente no encontrado"));
         Mascota mascota = mascotaRepository.findById(citaRq.getMascotaId())
@@ -82,6 +92,7 @@ public class CitaServiceImpl implements CitaService {
     }
 
     private void validarCita(CitaRq citaRq) throws BadRequestException {
+        // Comprueba que todos los datos obligatorios de la cita estén presentes.
         if (citaRq == null || citaRq.getClienteId() == null || citaRq.getMascotaId() == null
                 || citaRq.getMedicoId() == null || citaRq.getFechaHora() == null
                 || citaRq.getEstado() == null || citaRq.getEstado().isBlank()
@@ -91,12 +102,14 @@ public class CitaServiceImpl implements CitaService {
     }
 
     private void validarRangoFechas(LocalDateTime fechaInicial, LocalDateTime fechaFinal) throws BadRequestException {
+        // Evita consultar con fechas vacías o en un orden incorrecto.
         if (fechaInicial == null || fechaFinal == null || fechaInicial.isAfter(fechaFinal)) {
             throw new BadRequestException("El rango de fechas no es válido");
         }
     }
 
     private MiRespuestaRS respuesta(String mensaje) {
+        // Devuelve el formato de respuesta usado por las operaciones exitosas.
         MiRespuestaRS respuesta = new MiRespuestaRS();
         respuesta.setStatus(200);
         respuesta.setMessage(mensaje);

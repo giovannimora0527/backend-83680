@@ -11,13 +11,15 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 @RestController
+/** Controlador que expone los médicos. */
 public class MedicoApiController implements MedicoApi {
 
     @Autowired
+    /** Servicio con la lógica de médicos. */
     private MedicoService medicoService;
 
-
     @Override
+    /** Delega la consulta de médicos. */
     public ResponseEntity<List<Medico>> listarMedicos() throws BadRequestException {
         return ResponseEntity.ok(this.medicoService.listarMedicos());
     }

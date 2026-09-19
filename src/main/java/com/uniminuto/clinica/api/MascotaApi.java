@@ -20,6 +20,7 @@ import java.util.List;
 @RequestMapping("/mascota")
 public interface MascotaApi {
 
+    // Lista todas las mascotas.
     @GetMapping(value = "/listar",
             produces = {"application/json"},
             consumes = {"application/json"})
@@ -27,6 +28,7 @@ public interface MascotaApi {
             throws BadRequestException;
 
 
+    // Busca las mascotas asociadas a un cliente.
     @GetMapping(value = "/listar-by-cliente",
             produces = {"application/json"},
             consumes = {"application/json"})
@@ -34,6 +36,7 @@ public interface MascotaApi {
             @RequestParam Long clienteId)
             throws BadRequestException;
 
+    // Busca las mascotas que pertenecen a una raza.
     @GetMapping(value = "/listar-by-raza",
             produces = {"application/json"},
             consumes = {"application/json"})
@@ -42,6 +45,7 @@ public interface MascotaApi {
             throws BadRequestException;
 
 
+    // Registra una nueva mascota.
     @PostMapping(value = "/guardar",
             produces = {"application/json"},
             consumes = {"application/json"})
@@ -49,6 +53,7 @@ public interface MascotaApi {
             @RequestBody MascotaRq mascotaRq)
             throws BadRequestException;
 
+    // Actualiza los datos de una mascota existente.
     @PostMapping(value = "/actualizar",
             produces = {"application/json"},
             consumes = {"application/json"})

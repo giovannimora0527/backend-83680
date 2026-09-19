@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 @RequestMapping("/raza")
 public interface RazaApi {
 
+    // Registra una nueva raza.
     @PostMapping(value = "/guardar",
             produces = {"application/json"},
             consumes = {"application/json"})

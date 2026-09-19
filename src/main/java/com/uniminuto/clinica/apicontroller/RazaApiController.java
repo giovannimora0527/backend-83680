@@ -10,13 +10,15 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
+/** Controlador que expone el registro de razas. */
 public class RazaApiController implements RazaApi {
 
     @Autowired
+    /** Servicio con la lógica de razas. */
     private RazaService razaService;
 
-
     @Override
+    /** Delega el registro de una raza. */
     public ResponseEntity<MiRespuestaRS> guardarRaza(RazaRq razaRq) throws BadRequestException {
         return ResponseEntity.ok(this.razaService.guardarRazaNueva(razaRq));
     }

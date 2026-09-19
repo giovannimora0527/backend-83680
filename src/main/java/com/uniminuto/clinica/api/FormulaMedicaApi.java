@@ -11,6 +11,7 @@ import java.util.List;
 @CrossOrigin(origins = "*", allowedHeaders = "*")
 @RequestMapping("/formula-medica")
 public interface FormulaMedicaApi {
+    // Lista todas las fórmulas médicas registradas.
     @GetMapping(value = "/listar", produces = "application/json")
     ResponseEntity<List<FormulaMedica>> listarFormulasMedicas();
 }

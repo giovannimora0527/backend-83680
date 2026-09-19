@@ -11,8 +11,10 @@ import lombok.Data;
 @Entity
 @Table(name = "especializacion")
 @Data
+/** Representa una especialización médica. */
 public class Especializacion {
 
+    /** Identificador de la especialización. */
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
@@ -24,12 +26,18 @@ public class Especializacion {
             length = 100,
             unique = true
     )
+    /** Nombre de la especialización. */
     private String nombre;
 
     @Column(name = "descripcion")
+    /** Descripción de la especialización. */
     private String descripcion;
 
     @Column(name = "codigo_especializacion", nullable = false, length = 10, unique = true)
+    /** Código utilizado para identificarla. */
     private String codigoEspecializacion;
 
 }
+    /** Nombre de la especialización. */
+    /** Descripción de la especialización. */
+    /** Código utilizado para identificarla. */

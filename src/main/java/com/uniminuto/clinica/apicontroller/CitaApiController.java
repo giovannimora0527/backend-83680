@@ -14,27 +14,28 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @RestController
+/** Controlador que expone los servicios de citas. */
 public class CitaApiController implements CitaApi {
 
     @Autowired
+    /** Servicio con la lógica de citas. */
     private  CitaService citaService;
 
-    public CitaApiController(CitaService citaService) {
-        this.citaService = citaService;
-    }
-
     @Override
+    /** Delega la consulta de citas por rango de fechas. */
     public ResponseEntity<List<Cita>> listarCitasPorFecha(LocalDateTime fechaInicial, LocalDateTime fechaFinal)
             throws BadRequestException {
         return ResponseEntity.ok(citaService.listarCitasPorFecha(fechaInicial, fechaFinal));
     }
 
     @Override
+    /** Delega la creación de una cita. */
     public ResponseEntity<MiRespuestaRS> crearCita(CitaRq citaRq) throws BadRequestException {
         return ResponseEntity.ok(citaService.crearCita(citaRq));
     }
 
     @Override
+    /** Delega la actualización de una cita. */
     public ResponseEntity<MiRespuestaRS> actualizarCita(CitaRq citaRq) throws BadRequestException {
         return ResponseEntity.ok(citaService.actualizarCita(citaRq));
     }

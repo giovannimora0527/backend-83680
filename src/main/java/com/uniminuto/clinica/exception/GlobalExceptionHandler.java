@@ -7,9 +7,11 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 @RestControllerAdvice
+/** Convierte las excepciones de la aplicación en respuestas HTTP. */
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(BadRequestException.class)
+    /** Atiende errores de validación o solicitudes incorrectas. */
     public ResponseEntity<ErrorResponse> handleBadRequest(
             BadRequestException ex) {
 
@@ -25,6 +27,7 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(Exception.class)
+    /** Atiende errores no controlados del servidor. */
     public ResponseEntity<ErrorResponse> handleException(Exception ex) {
         ErrorResponse error = new ErrorResponse(
                 HttpStatus.INTERNAL_SERVER_ERROR.value(),

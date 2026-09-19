@@ -15,6 +15,7 @@ import java.util.List;
 public interface MedicoApi {
 
 
+    // Lista todos los médicos registrados.
     @GetMapping(value = "/listar",
             produces = {"application/json"},
             consumes = {"application/json"})

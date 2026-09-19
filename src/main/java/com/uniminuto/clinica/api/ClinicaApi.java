@@ -23,13 +23,14 @@ public interface ClinicaApi {
     ResponseEntity<String> testService()
             throws BadRequestException;
 
-
+    // Comprueba que el controlador puede comunicarse con el servicio.
     @GetMapping(value = "/test2",
             produces = {"application/text"},
             consumes = {"application/json"})
     ResponseEntity<String> testService2()
             throws BadRequestException;
 
+    // Devuelve una respuesta de prueba en formato JSON.
     @GetMapping(value = "/test3",
             produces = {"application/json"},
             consumes = {"application/json"})

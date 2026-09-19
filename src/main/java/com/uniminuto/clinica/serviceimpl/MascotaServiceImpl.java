@@ -18,23 +18,29 @@ import java.util.List;
 import java.util.Optional;
 
 @Service
+/** Implementa las operaciones de mascotas. */
 public class MascotaServiceImpl implements MascotaService {
 
     @Autowired
+    /** Repositorio de mascotas. */
     private MascotaRepository mascotaRepository;
 
     @Autowired
+    /** Repositorio de clientes. */
     private ClienteRepository clienteRepository;
 
     @Autowired
+    /** Repositorio de razas. */
     private RazaRepository razaRepository;
 
     @Override
+    // Lista todas las mascotas ordenadas alfabéticamente por nombre.
     public List<Mascota> listarMascotas() throws BadRequestException {
         return mascotaRepository.findAllByOrderByNombreMascotaAsc();
     }
 
     @Override
+    // Valida el cliente y devuelve sus mascotas ordenadas por nombre.
     public List<Mascota> listarMascotasPorCliente(Long clienteId) throws BadRequestException {
         if (clienteId == null) {
             throw new BadRequestException("El ID del cliente no puede ser nulo");
@@ -51,6 +57,7 @@ public class MascotaServiceImpl implements MascotaService {
     }
 
     @Override
+    // Valida la raza y devuelve las mascotas que pertenecen a ella.
     public List<Mascota> listarMascotasPorRaza(Integer razaId) throws BadRequestException {
         if (razaId == null) {
             throw new BadRequestException("El ID de la raza no puede ser nulo");
@@ -66,6 +73,7 @@ public class MascotaServiceImpl implements MascotaService {
     }
 
     @Override
+    // Valida la solicitud, relaciona la mascota y la guarda.
     public MiRespuestaRS guardarMascota(MascotaRq mascotaRq) throws BadRequestException {
         // Paso 1. Creo un validador del objeto de entrada
         this.validarObjetoMascota(mascotaRq);
@@ -103,6 +111,7 @@ public class MascotaServiceImpl implements MascotaService {
     }
 
     @Override
+    // Busca la mascota existente, actualiza sus datos y guarda los cambios.
     public MiRespuestaRS actualizarMascota(MascotaRq mascotaRq) throws BadRequestException {
         // Paso 1. Creo un validador del objeto de entrada
         this.validarObjetoMascota(mascotaRq);
@@ -147,6 +156,7 @@ public class MascotaServiceImpl implements MascotaService {
     }
 
     private void validarObjetoMascota(MascotaRq mascotaRq) throws BadRequestException {
+       // Revisa que los datos básicos de la mascota sean válidos.
        if (mascotaRq == null) {
            throw new BadRequestException("El objeto MascotaRq no puede ser nulo");
        }

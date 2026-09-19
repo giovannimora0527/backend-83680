@@ -13,12 +13,15 @@ import java.time.LocalDateTime;
 import java.util.Optional;
 
 @Service
+/** Implementa las operaciones de razas. */
 public class RazaServiceImpl implements RazaService {
 
     @Autowired
+    /** Repositorio de razas. */
     private RazaRepository razaRepository;
 
     @Override
+    // Valida los datos, evita duplicados y guarda una nueva raza.
     public MiRespuestaRS guardarRazaNueva(RazaRq razaRq) throws BadRequestException {
 
         validarObjetoEntrada(razaRq);
@@ -49,6 +52,7 @@ public class RazaServiceImpl implements RazaService {
     }
 
     private void validarObjetoEntrada(RazaRq razaRq) throws BadRequestException {
+        // Comprueba que la solicitud tenga nombre y especie.
         if (razaRq == null) {
             throw new BadRequestException("El objeto RazaRq no puede ser nulo");
         }
