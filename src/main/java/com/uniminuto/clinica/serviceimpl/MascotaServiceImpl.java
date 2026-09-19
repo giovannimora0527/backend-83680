@@ -166,7 +166,9 @@ public class MascotaServiceImpl implements MascotaService {
        if (mascotaRq.getRazaId() == null || mascotaRq.getRazaId() < 0) {
            throw new BadRequestException("El ID de la raza no puede ser nulo o negativo");
        }
+
     }
+
 
 
 }

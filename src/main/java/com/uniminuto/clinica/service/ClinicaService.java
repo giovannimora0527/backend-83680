@@ -9,4 +9,5 @@ public interface ClinicaService {
 
 
     MiRespuestaRS testService3() throws BadRequestException;
+
 }
