@@ -2,12 +2,19 @@ package com.uniminuto.clinica.repository;
 
 import com.uniminuto.clinica.entity.Raza;
 import org.springframework.data.jpa.repository.JpaRepository;
-import java.util.Optional;
 
+/**
+ * Repositorio de las razas.
+ */
 public interface RazaRepository extends JpaRepository<Raza, Integer> {
 
-    Optional<Raza> findByNombre(String nombre);
-
-    Optional<Raza> findByEspecie(String especie);
+    /**
+     * Indica si ya existe una raza con ese nombre y esa especie.
+     *
+     * @param nombre  nombre de la raza.
+     * @param especie especie de la raza.
+     * @return true si la raza ya existe.
+     */
+    boolean existsByNombreAndEspecie(String nombre, String especie);
 
 }

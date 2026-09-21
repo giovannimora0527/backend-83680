@@ -2,9 +2,17 @@ package com.uniminuto.clinica.service;
 
 import com.uniminuto.clinica.models.MiRespuestaRS;
 import com.uniminuto.clinica.models.RazaRq;
-import org.apache.coyote.BadRequestException;
 
+/**
+ * Servicio con la lógica de negocio de las razas.
+ */
 public interface RazaService {
 
-    MiRespuestaRS guardarRazaNueva(RazaRq razaRq) throws BadRequestException;
+    /**
+     * Crea una nueva raza.
+     *
+     * @param razaRq datos de la raza.
+     * @return respuesta de éxito.
+     */
+    MiRespuestaRS guardarRazaNueva(RazaRq razaRq);
 }

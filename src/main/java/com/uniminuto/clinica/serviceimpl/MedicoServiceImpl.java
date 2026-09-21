@@ -8,12 +8,23 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 
+/**
+ * Implementacion de la logica de los medicos.
+ */
 @Service
 public class MedicoServiceImpl implements MedicoService {
 
+    /**
+     * Repositorio de medicos.
+     */
     @Autowired
     private MedicoRepository medicoRepository;
 
+    /**
+     * Lista los medicos de la clinica.
+     *
+     * @return los medicos registrados.
+     */
     @Override
     public List<Medico> listarMedicos() {
         return medicoRepository.findAll();

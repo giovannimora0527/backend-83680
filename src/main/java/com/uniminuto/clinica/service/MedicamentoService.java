@@ -1,11 +1,18 @@
 package com.uniminuto.clinica.service;
 
 import com.uniminuto.clinica.entity.Medicamento;
-import org.apache.coyote.BadRequestException;
 
 import java.util.List;
 
+/**
+ * Servicio con la logica de los medicamentos.
+ */
 public interface MedicamentoService {
 
-    List<Medicamento> obtenerMedicamentos() throws BadRequestException;
+    /**
+     * Lista los medicamentos del inventario.
+     *
+     * @return los medicamentos registrados.
+     */
+    List<Medicamento> obtenerMedicamentos();
 }

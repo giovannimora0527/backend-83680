@@ -3,13 +3,13 @@ package com.uniminuto.clinica.serviceimpl;
 import com.uniminuto.clinica.entity.Cliente;
 import com.uniminuto.clinica.entity.Mascota;
 import com.uniminuto.clinica.entity.Raza;
+import com.uniminuto.clinica.exception.BadRequestException;
 import com.uniminuto.clinica.models.MascotaRq;
 import com.uniminuto.clinica.models.MiRespuestaRS;
 import com.uniminuto.clinica.repository.ClienteRepository;
 import com.uniminuto.clinica.repository.MascotaRepository;
 import com.uniminuto.clinica.repository.RazaRepository;
 import com.uniminuto.clinica.service.MascotaService;
-import org.apache.coyote.BadRequestException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -17,25 +17,48 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * Implementacion de la logica de las mascotas.
+ */
 @Service
 public class MascotaServiceImpl implements MascotaService {
 
+    /**
+     * Repositorio de mascotas.
+     */
     @Autowired
     private MascotaRepository mascotaRepository;
 
+    /**
+     * Repositorio de clientes.
+     */
     @Autowired
     private ClienteRepository clienteRepository;
 
+    /**
+     * Repositorio de razas.
+     */
     @Autowired
     private RazaRepository razaRepository;
 
+    /**
+     * Lista todas las mascotas ordenadas por nombre.
+     *
+     * @return las mascotas registradas.
+     */
     @Override
-    public List<Mascota> listarMascotas() throws BadRequestException {
+    public List<Mascota> listarMascotas() {
         return mascotaRepository.findAllByOrderByNombreMascotaAsc();
     }
 
+    /**
+     * Lista las mascotas de un cliente.
+     *
+     * @param clienteId identificador del cliente.
+     * @return las mascotas del cliente.
+     */
     @Override
-    public List<Mascota> listarMascotasPorCliente(Long clienteId) throws BadRequestException {
+    public List<Mascota> listarMascotasPorCliente(Long clienteId) {
         if (clienteId == null) {
             throw new BadRequestException("El ID del cliente no puede ser nulo");
         }
@@ -50,8 +73,14 @@ public class MascotaServiceImpl implements MascotaService {
         return mascotaRepository.findAllByClienteOrderByNombreMascotaAsc(optCliente.get());
     }
 
+    /**
+     * Lista las mascotas de una raza.
+     *
+     * @param razaId identificador de la raza.
+     * @return las mascotas de la raza.
+     */
     @Override
-    public List<Mascota> listarMascotasPorRaza(Integer razaId) throws BadRequestException {
+    public List<Mascota> listarMascotasPorRaza(Integer razaId) {
         if (razaId == null) {
             throw new BadRequestException("El ID de la raza no puede ser nulo");
         }
@@ -65,8 +94,14 @@ public class MascotaServiceImpl implements MascotaService {
         return mascotaRepository.findAllByRazaOrderByNombreMascotaAsc(optRaza.get());
     }
 
+    /**
+     * Guarda una mascota nueva.
+     *
+     * @param mascotaRq datos de la mascota.
+     * @return respuesta de exito.
+     */
     @Override
-    public MiRespuestaRS guardarMascota(MascotaRq mascotaRq) throws BadRequestException {
+    public MiRespuestaRS guardarMascota(MascotaRq mascotaRq) {
         // Paso 1. Creo un validador del objeto de entrada
         this.validarObjetoMascota(mascotaRq);
 
@@ -102,10 +137,20 @@ public class MascotaServiceImpl implements MascotaService {
         return rta;
     }
 
+    /**
+     * Actualiza una mascota que ya existe.
+     *
+     * @param mascotaRq datos de la mascota, incluido su id.
+     * @return respuesta de exito.
+     */
     @Override
-    public MiRespuestaRS actualizarMascota(MascotaRq mascotaRq) throws BadRequestException {
+    public MiRespuestaRS actualizarMascota(MascotaRq mascotaRq) {
         // Paso 1. Creo un validador del objeto de entrada
         this.validarObjetoMascota(mascotaRq);
+
+        if (mascotaRq.getMascotaId() == null) {
+            throw new BadRequestException("El ID de la mascota no puede ser nulo");
+        }
 
         // paso 2. Busco el cliente y la raza en la base de datos
         Optional<Cliente> optCliente = clienteRepository
@@ -146,7 +191,12 @@ public class MascotaServiceImpl implements MascotaService {
         return rta;
     }
 
-    private void validarObjetoMascota(MascotaRq mascotaRq) throws BadRequestException {
+    /**
+     * Valida los datos obligatorios de la mascota.
+     *
+     * @param mascotaRq objeto a validar.
+     */
+    private void validarObjetoMascota(MascotaRq mascotaRq) {
        if (mascotaRq == null) {
            throw new BadRequestException("El objeto MascotaRq no puede ser nulo");
        }
