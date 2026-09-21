@@ -1,12 +1,12 @@
 package com.uniminuto.clinica.serviceimpl;
 
 import com.uniminuto.clinica.entity.HistoriaMedica;
+import com.uniminuto.clinica.exception.BadRequestException;
 import com.uniminuto.clinica.models.HistoriaMedicaRq;
 import com.uniminuto.clinica.models.MiRespuestaRS;
 import com.uniminuto.clinica.repository.AnotacionHistoriaRepository;
 import com.uniminuto.clinica.repository.HistoriaMedicaRepository;
 import com.uniminuto.clinica.service.HistoriaMedicaService;
-import org.apache.coyote.BadRequestException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -35,6 +35,9 @@ public class HistoriaMedicaServiceImpl implements HistoriaMedicaService {
     // Valida los datos, crea una historia y registra su fecha de creación.
     public MiRespuestaRS crearHistoriaMedica(HistoriaMedicaRq historiaMedicaRq) throws BadRequestException {
         validarHistoriaMedica(historiaMedicaRq);
+        if (historiaMedicaRepository.existsByPacienteId(historiaMedicaRq.getPacienteId())) {
+            throw new BadRequestException("El paciente ya tiene una historia médica creada");
+        }
 
         HistoriaMedica historiaMedica = new HistoriaMedica();
         historiaMedica.setPacienteId(historiaMedicaRq.getPacienteId());

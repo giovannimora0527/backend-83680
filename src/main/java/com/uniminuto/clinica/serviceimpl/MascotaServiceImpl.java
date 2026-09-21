@@ -3,13 +3,13 @@ package com.uniminuto.clinica.serviceimpl;
 import com.uniminuto.clinica.entity.Cliente;
 import com.uniminuto.clinica.entity.Mascota;
 import com.uniminuto.clinica.entity.Raza;
+import com.uniminuto.clinica.exception.BadRequestException;
 import com.uniminuto.clinica.models.MascotaRq;
 import com.uniminuto.clinica.models.MiRespuestaRS;
 import com.uniminuto.clinica.repository.ClienteRepository;
 import com.uniminuto.clinica.repository.MascotaRepository;
 import com.uniminuto.clinica.repository.RazaRepository;
 import com.uniminuto.clinica.service.MascotaService;
-import org.apache.coyote.BadRequestException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -83,6 +83,12 @@ public class MascotaServiceImpl implements MascotaService {
                 .findById(mascotaRq.getClienteId());
         if (optCliente.isEmpty()) {
             throw new BadRequestException("Cliente no encontrado");
+        }
+
+        if (mascotaRepository.existsByNombreMascotaAndCliente_ClienteId(
+                mascotaRq.getNombreMascota(), mascotaRq.getClienteId())) {
+            throw new BadRequestException(
+                    "La mascota ya está creada para este cliente: " + mascotaRq.getNombreMascota());
         }
 
         Optional<Raza> optRaza = razaRepository

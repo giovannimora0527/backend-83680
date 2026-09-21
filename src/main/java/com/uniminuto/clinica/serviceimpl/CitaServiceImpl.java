@@ -4,6 +4,7 @@ import com.uniminuto.clinica.entity.Cita;
 import com.uniminuto.clinica.entity.Cliente;
 import com.uniminuto.clinica.entity.Mascota;
 import com.uniminuto.clinica.entity.Medico;
+import com.uniminuto.clinica.exception.BadRequestException;
 import com.uniminuto.clinica.models.CitaRq;
 import com.uniminuto.clinica.models.MiRespuestaRS;
 import com.uniminuto.clinica.repository.CitaRepository;
@@ -11,7 +12,6 @@ import com.uniminuto.clinica.repository.ClienteRepository;
 import com.uniminuto.clinica.repository.MascotaRepository;
 import com.uniminuto.clinica.repository.MedicoRepository;
 import com.uniminuto.clinica.service.CitaService;
-import org.apache.coyote.BadRequestException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -55,6 +55,10 @@ public class CitaServiceImpl implements CitaService {
     // Valida la solicitud, crea la cita y la guarda en la base de datos.
     public MiRespuestaRS crearCita(CitaRq citaRq) throws BadRequestException {
         validarCita(citaRq);
+        if (citaRepository.existsByMascota_MascotaIdAndFechaHora(
+                citaRq.getMascotaId(), citaRq.getFechaHora())) {
+            throw new BadRequestException("La mascota ya tiene una cita en esa fecha y hora");
+        }
         Cita cita = new Cita();
         asignarDatos(cita, citaRq);
         citaRepository.save(cita);

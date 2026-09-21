@@ -12,6 +12,9 @@ import java.util.List;
 /** Permite consultar y guardar mascotas. */
 public interface MascotaRepository extends JpaRepository<Mascota, Integer> {
 
+    /** Indica si un cliente ya tiene una mascota con el mismo nombre. */
+    boolean existsByNombreMascotaAndCliente_ClienteId(String nombreMascota, Long clienteId);
+
     /** Lista todas las mascotas ordenadas por nombre. */
     List<Mascota> findAllByOrderByNombreMascotaAsc();
 

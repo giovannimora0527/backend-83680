@@ -1,11 +1,11 @@
 package com.uniminuto.clinica.serviceimpl;
 
 import com.uniminuto.clinica.entity.Raza;
+import com.uniminuto.clinica.exception.BadRequestException;
 import com.uniminuto.clinica.models.MiRespuestaRS;
 import com.uniminuto.clinica.models.RazaRq;
 import com.uniminuto.clinica.repository.RazaRepository;
 import com.uniminuto.clinica.service.RazaService;
-import org.apache.coyote.BadRequestException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 

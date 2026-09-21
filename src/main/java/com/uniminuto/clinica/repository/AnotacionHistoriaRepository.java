@@ -10,6 +10,10 @@ import java.util.List;
 
 /** Permite consultar y guardar anotaciones de historias médicas. */
 public interface AnotacionHistoriaRepository extends JpaRepository<AnotacionHistoria, Long> {
+    /** Indica si ya existe la misma anotación en una historia médica. */
+    boolean existsByHistoriaMedica_IdAndMedico_IdAndDescripcion(
+            Long historiaMedicaId, Long medicoId, String descripcion);
+
     /** Indica si una historia médica tiene anotaciones asociadas. */
     boolean existsByHistoriaMedica_Id(Long historiaMedicaId);
 

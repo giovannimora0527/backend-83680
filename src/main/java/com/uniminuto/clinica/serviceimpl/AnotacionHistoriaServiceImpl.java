@@ -3,13 +3,13 @@ package com.uniminuto.clinica.serviceimpl;
 import com.uniminuto.clinica.entity.AnotacionHistoria;
 import com.uniminuto.clinica.entity.HistoriaMedica;
 import com.uniminuto.clinica.entity.Medico;
+import com.uniminuto.clinica.exception.BadRequestException;
 import com.uniminuto.clinica.models.AnotacionHistoriaRq;
 import com.uniminuto.clinica.models.MiRespuestaRS;
 import com.uniminuto.clinica.repository.AnotacionHistoriaRepository;
 import com.uniminuto.clinica.repository.HistoriaMedicaRepository;
 import com.uniminuto.clinica.repository.MedicoRepository;
 import com.uniminuto.clinica.service.AnotacionHistoriaService;
-import org.apache.coyote.BadRequestException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -42,6 +42,12 @@ public class AnotacionHistoriaServiceImpl implements AnotacionHistoriaService {
     // Valida y guarda una nueva anotación relacionada con una historia clínica.
     public MiRespuestaRS crearAnotacion(AnotacionHistoriaRq anotacionRq) throws BadRequestException {
         validarAnotacion(anotacionRq);
+        if (anotacionRepository.existsByHistoriaMedica_IdAndMedico_IdAndDescripcion(
+                anotacionRq.getHistoriaMedicaId(),
+                anotacionRq.getMedicoId(),
+                anotacionRq.getDescripcion().trim())) {
+            throw new BadRequestException("La anotación ya está creada en la historia médica");
+        }
         AnotacionHistoria anotacion = new AnotacionHistoria();
         asignarDatos(anotacion, anotacionRq);
         anotacion.setFecha(LocalDateTime.now());
