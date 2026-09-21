@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Clínica Veterinaria</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">
+    <span class="brand-mark" aria-hidden="true">🐾</span>
+    <div>
+      <h1>Clínica Veterinaria</h1>
+      <p>Panel de gestión</p>
+    </div>
+  </div>
+
+  <nav class="tabs" aria-label="Secciones">
+    <a href="#formulas" data-view="formulas">Fórmulas médicas</a>
+    <a href="#citas" data-view="citas">Citas</a>
+    <a href="#anotaciones" data-view="anotaciones">Anotaciones de historia</a>
+  </nav>
+
+  <div class="api-box">
+    <label for="apiBase">API</label>
+    <input id="apiBase" type="url" spellcheck="false" autocomplete="off">
+    <span id="apiStatus" class="status" role="status">Sin conexión</span>
+  </div>
+</header>
+
+<main>
+
+  <!-- ===================== FÓRMULAS ===================== -->
+  <section id="view-formulas" class="view" hidden>
+    <div class="view-head">
+      <div>
+        <h2>Fórmulas médicas</h2>
+        <p class="hint">Ordenadas de la más reciente a la más antigua por fecha de creación.</p>
+      </div>
+      <button id="btnRefreshFormulas" class="btn btn-ghost" type="button">Actualizar</button>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Creada</th><th>Cita</th><th>Medicamento</th><th>Dosis</th><th>Indicaciones</th><th>Actualizada</th>
+          </tr>
+        </thead>
+        <tbody id="tbFormulas"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ===================== CITAS ===================== -->
+  <section id="view-citas" class="view" hidden>
+    <div class="view-head">
+      <div>
+        <h2>Citas</h2>
+        <p class="hint">Filtra por rango de fechas. Se muestran de la más reciente a la más antigua.</p>
+      </div>
+      <button id="btnNewCita" class="btn btn-primary" type="button">+ Nueva cita</button>
+    </div>
+
+    <form id="formFiltroCitas" class="filters">
+      <label>Fecha inicial <input type="date" id="citaDesde" required></label>
+      <label>Fecha final <input type="date" id="citaHasta" required></label>
+      <button class="btn btn-secondary" type="submit">Filtrar</button>
+    </form>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Fecha y hora</th><th>Mascota</th><th>Cliente</th><th>Médico</th><th>Motivo</th><th>Estado</th><th></th>
+          </tr>
+        </thead>
+        <tbody id="tbCitas"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ===================== ANOTACIONES ===================== -->
+  <section id="view-anotaciones" class="view" hidden>
+    <div class="view-head">
+      <div>
+        <h2>Anotaciones de historia médica</h2>
+        <p class="hint">Filtra por rango de fechas. Se muestran de la más reciente a la más antigua.</p>
+      </div>
+      <button id="btnNewAnotacion" class="btn btn-primary" type="button">+ Nueva anotación</button>
+    </div>
+
+    <form id="formFiltroAnotaciones" class="filters">
+      <label>Fecha inicial <input type="date" id="anoDesde" required></label>
+      <label>Fecha final <input type="date" id="anoHasta" required></label>
+      <button class="btn btn-secondary" type="submit">Filtrar</button>
+    </form>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Fecha</th><th>Historia</th><th>Médico</th><th>Descripción</th><th></th>
+          </tr>
+        </thead>
+        <tbody id="tbAnotaciones"></tbody>
+      </table>
+    </div>
+  </section>
+
+</main>
+
+<!-- ===================== DIÁLOGO CITA ===================== -->
+<dialog id="dlgCita">
+  <form id="formCita" method="dialog" novalidate>
+    <h3 id="dlgCitaTitulo">Nueva cita</h3>
+    <input type="hidden" id="citaId">
+
+    <label>Mascota
+      <select id="citaMascota" required></select>
+    </label>
+    <p class="field-note" id="citaClienteNote"></p>
+
+    <label>Médico
+      <select id="citaMedico" required></select>
+    </label>
+
+    <label>Fecha y hora
+      <input type="datetime-local" id="citaFechaHora" required>
+    </label>
+
+    <label id="citaEstadoWrap" hidden>Estado
+      <select id="citaEstado">
+        <option value="programada">Programada</option>
+        <option value="completada">Completada</option>
+        <option value="cancelada">Cancelada</option>
+      </select>
+    </label>
+
+    <label>Motivo
+      <textarea id="citaMotivo" rows="3" placeholder="Motivo de la consulta"></textarea>
+    </label>
+
+    <p class="form-error" id="citaError" role="alert" hidden></p>
+    <div class="dialog-actions">
+      <button type="button" class="btn btn-ghost" data-close>Cancelar</button>
+      <button type="submit" class="btn btn-primary">Guardar</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- ===================== DIÁLOGO ANOTACIÓN ===================== -->
+<dialog id="dlgAnotacion">
+  <form id="formAnotacion" method="dialog" novalidate>
+    <h3 id="dlgAnotacionTitulo">Nueva anotación</h3>
+    <input type="hidden" id="anoId">
+
+    <label>ID de la historia médica
+      <input type="number" id="anoHistoriaForm" min="1" required>
+    </label>
+
+    <label>Médico
+      <select id="anoMedico" required></select>
+    </label>
+
+    <label>Descripción
+      <textarea id="anoDescripcion" rows="4" required placeholder="Escribe la anotación"></textarea>
+    </label>
+
+    <p class="form-error" id="anoError" role="alert" hidden></p>
+    <div class="dialog-actions">
+      <button type="button" class="btn btn-ghost" data-close>Cancelar</button>
+      <button type="submit" class="btn btn-primary">Guardar</button>
+    </div>
+  </form>
+</dialog>
+
+<div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+
+<script src="app.js"></script>
+</body>
+</html>
