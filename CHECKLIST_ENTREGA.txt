@@ -1,0 +1,24 @@
+CHECKLIST FINAL
+
+[ ] Proyecto abre en NetBeans como Maven
+[ ] Java 21 configurado
+[ ] MySQL activo
+[ ] Base `clinica` disponible
+[ ] Credenciales revisadas
+[ ] `mvn clean package` termina en BUILD SUCCESS
+[ ] La aplicación inicia correctamente
+[ ] GET /clinica/v1/formulas-medicas probado
+[ ] GET de citas probado
+[ ] POST de citas probado
+[ ] PUT de citas probado
+[ ] GET de anotaciones probado
+[ ] GET de anotaciones por rango probado
+[ ] POST de anotación probado
+[ ] PUT de anotación probado
+[ ] Errores de recurso inexistente probados
+[ ] Validaciones probadas
+[ ] Javadoc revisado
+[ ] Branch `codigo_nombre` creado
+[ ] Commit descriptivo realizado
+[ ] Push realizado
+[ ] ZIP individual preparado
