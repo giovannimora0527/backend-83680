@@ -17,12 +17,17 @@ public interface CitaRepository extends JpaRepository<Cita, Long> {
     /**
      * Busca las citas que se encuentran entre una fecha inicial y una fecha final,
      * ordenándolas desde la más reciente hasta la más antigua.
-     *
-     * @param fechaInicial fecha inicial del rango de búsqueda.
-     * @param fechaFinal fecha final del rango de búsqueda.
-     * @return lista de citas encontradas y ordenadas por fecha descendente.
      */
     List<Cita> findByFechaHoraBetweenOrderByFechaHoraDesc(
+            LocalDateTime fechaInicial,
+            LocalDateTime fechaFinal
+    );
+
+    /**
+     * Busca las citas de un médico dentro de un rango de fechas.
+     */
+    List<Cita> findByMedicoIdAndFechaHoraBetween(
+            Integer medicoId,
             LocalDateTime fechaInicial,
             LocalDateTime fechaFinal
     );

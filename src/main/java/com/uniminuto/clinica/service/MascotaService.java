@@ -1,9 +1,10 @@
 package com.uniminuto.clinica.service;
 
-import com.uniminuto.clinica.entity.Mascota;
+import java.util.List;
+
 import org.apache.coyote.BadRequestException;
 
-import java.util.List;
+import com.uniminuto.clinica.entity.Mascota;
 
 public interface MascotaService {
 
@@ -12,4 +13,8 @@ public interface MascotaService {
     List<Mascota> listarMascotasPorCliente(Long clienteId) throws BadRequestException;
 
     List<Mascota> listarMascotasPorRaza(Integer razaId) throws BadRequestException;
+
+    Mascota crearMascota(Mascota mascota) throws BadRequestException;
+
+    Mascota actualizarMascota(Integer mascotaId, Mascota mascota) throws BadRequestException;
 }

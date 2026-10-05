@@ -1,6 +1,7 @@
 package com.uniminuto.clinica.api;
 
-import com.uniminuto.clinica.entity.Medico;
+import java.util.List;
+
 import org.apache.coyote.BadRequestException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -11,29 +12,22 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 
-import java.util.List;
+import com.uniminuto.clinica.entity.Cliente;
 
-@CrossOrigin(
-        origins = "*",
-        allowedHeaders = "*"
-)
-@RequestMapping("/medico")
-public interface MedicoApi {
+@CrossOrigin(origins = "*", allowedHeaders = "*")
+@RequestMapping("/cliente")
+public interface ClienteApi {
 
-    @GetMapping(
-            value = "/listar",
-            produces = {"application/json"}
-    )
-    ResponseEntity<List<Medico>> listarMedicos()
-            throws BadRequestException;
+    @GetMapping(value = "/listar", produces = {"application/json"})
+    ResponseEntity<List<Cliente>> listarClientes() throws BadRequestException;
 
     @PostMapping(
             value = "/crear",
             produces = {"application/json"},
             consumes = {"application/json"}
     )
-    ResponseEntity<Medico> crearMedico(
-            @RequestBody Medico medico
+    ResponseEntity<Cliente> crearCliente(
+            @RequestBody Cliente cliente
     ) throws BadRequestException;
 
     @PutMapping(
@@ -41,8 +35,18 @@ public interface MedicoApi {
             produces = {"application/json"},
             consumes = {"application/json"}
     )
-    ResponseEntity<Medico> actualizarMedico(
+    ResponseEntity<Cliente> actualizarCliente(
             @PathVariable Long id,
-            @RequestBody Medico medico
+            @RequestBody Cliente cliente
+    ) throws BadRequestException;
+
+    @PutMapping(
+            value = "/estado/{id}",
+            produces = {"application/json"},
+            consumes = {"application/json"}
+    )
+    ResponseEntity<Cliente> cambiarEstado(
+            @PathVariable Long id,
+            @RequestBody Boolean activo
     ) throws BadRequestException;
 }

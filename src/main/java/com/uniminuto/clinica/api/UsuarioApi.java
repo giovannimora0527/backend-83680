@@ -1,6 +1,7 @@
 package com.uniminuto.clinica.api;
 
-import com.uniminuto.clinica.entity.Medico;
+import java.util.List;
+
 import org.apache.coyote.BadRequestException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -11,38 +12,67 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 
-import java.util.List;
+import com.uniminuto.clinica.entity.Usuario;
 
 @CrossOrigin(
         origins = "*",
         allowedHeaders = "*"
 )
-@RequestMapping("/medico")
-public interface MedicoApi {
+@RequestMapping("/usuario")
+public interface UsuarioApi {
+
+    // ==========================================
+    // LISTAR USUARIOS
+    // ==========================================
 
     @GetMapping(
             value = "/listar",
             produces = {"application/json"}
     )
-    ResponseEntity<List<Medico>> listarMedicos()
+    ResponseEntity<List<Usuario>> listarUsuarios()
             throws BadRequestException;
+
+
+    // ==========================================
+    // CREAR USUARIO
+    // ==========================================
 
     @PostMapping(
             value = "/crear",
             produces = {"application/json"},
             consumes = {"application/json"}
     )
-    ResponseEntity<Medico> crearMedico(
-            @RequestBody Medico medico
+    ResponseEntity<Usuario> crearUsuario(
+            @RequestBody Usuario usuario
     ) throws BadRequestException;
+
+
+    // ==========================================
+    // ACTUALIZAR USUARIO
+    // ==========================================
 
     @PutMapping(
             value = "/actualizar/{id}",
             produces = {"application/json"},
             consumes = {"application/json"}
     )
-    ResponseEntity<Medico> actualizarMedico(
+    ResponseEntity<Usuario> actualizarUsuario(
             @PathVariable Long id,
-            @RequestBody Medico medico
+            @RequestBody Usuario usuario
+    ) throws BadRequestException;
+
+
+    // ==========================================
+    // CAMBIAR ESTADO
+    // ==========================================
+
+    @PutMapping(
+            value = "/estado/{id}",
+            produces = {"application/json"},
+            consumes = {"application/json"}
+    )
+    ResponseEntity<Usuario> cambiarEstado(
+            @PathVariable Long id,
+            @RequestBody Boolean activo
     ) throws BadRequestException;
 }

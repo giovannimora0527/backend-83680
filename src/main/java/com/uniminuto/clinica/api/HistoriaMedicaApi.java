@@ -1,6 +1,6 @@
 package com.uniminuto.clinica.api;
 
-import com.uniminuto.clinica.entity.Medico;
+import com.uniminuto.clinica.entity.HistoriaMedica;
 import org.apache.coyote.BadRequestException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -17,14 +17,14 @@ import java.util.List;
         origins = "*",
         allowedHeaders = "*"
 )
-@RequestMapping("/medico")
-public interface MedicoApi {
+@RequestMapping("/historia-medica")
+public interface HistoriaMedicaApi {
 
     @GetMapping(
             value = "/listar",
             produces = {"application/json"}
     )
-    ResponseEntity<List<Medico>> listarMedicos()
+    ResponseEntity<List<HistoriaMedica>> listarHistorias()
             throws BadRequestException;
 
     @PostMapping(
@@ -32,8 +32,8 @@ public interface MedicoApi {
             produces = {"application/json"},
             consumes = {"application/json"}
     )
-    ResponseEntity<Medico> crearMedico(
-            @RequestBody Medico medico
+    ResponseEntity<HistoriaMedica> crearHistoria(
+            @RequestBody HistoriaMedica historia
     ) throws BadRequestException;
 
     @PutMapping(
@@ -41,8 +41,8 @@ public interface MedicoApi {
             produces = {"application/json"},
             consumes = {"application/json"}
     )
-    ResponseEntity<Medico> actualizarMedico(
+    ResponseEntity<HistoriaMedica> actualizarHistoria(
             @PathVariable Long id,
-            @RequestBody Medico medico
+            @RequestBody HistoriaMedica historia
     ) throws BadRequestException;
 }
