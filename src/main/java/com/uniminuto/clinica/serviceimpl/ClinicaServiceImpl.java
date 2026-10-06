@@ -2,7 +2,7 @@ package com.uniminuto.clinica.serviceimpl;
 
 import com.uniminuto.clinica.models.MiRespuestaRS;
 import com.uniminuto.clinica.service.ClinicaService;
-import org.apache.coyote.BadRequestException;
+import com.uniminuto.clinica.exception.BadRequestException;
 import org.springframework.stereotype.Service;
 
 @Service

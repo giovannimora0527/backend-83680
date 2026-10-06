@@ -1,15 +1,16 @@
 package com.uniminuto.clinica.serviceimpl;
 
 import com.uniminuto.clinica.entity.Raza;
+import com.uniminuto.clinica.exception.BadRequestException;
 import com.uniminuto.clinica.models.MiRespuestaRS;
 import com.uniminuto.clinica.models.RazaRq;
 import com.uniminuto.clinica.repository.RazaRepository;
 import com.uniminuto.clinica.service.RazaService;
-import org.apache.coyote.BadRequestException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -19,46 +20,39 @@ public class RazaServiceImpl implements RazaService {
     private RazaRepository razaRepository;
 
     @Override
-    public MiRespuestaRS guardarRazaNueva(RazaRq razaRq) throws BadRequestException {
+    public MiRespuestaRS crearRazaNueva(RazaRq razaRq) throws BadRequestException {
 
-        validarObjetoEntrada(razaRq);
+        this.validarRazaRq(razaRq);
+        Optional<Raza> optRaza = this.razaRepository.findByEspecieAndNombre(razaRq.getEspecie(), razaRq.getNombre());
 
-        Optional<Raza> optRaza = this.razaRepository
-                .findByNombre(razaRq.getNombre());
-        if (optRaza.isPresent()){
-            throw new BadRequestException("Ya existe una raza con el nombre: " + razaRq.getNombre());
+        if (optRaza.isPresent()) {
+            throw new BadRequestException("La raza ya existe para la especie especificada.");
         }
 
-        optRaza = this.razaRepository
-                .findByEspecie(razaRq.getEspecie());
-        if (optRaza.isPresent()){
-            throw new BadRequestException("Ya existe una raza con la especie: " + razaRq.getEspecie());
-        }
+        Raza nuevaRaza = new Raza();
+        nuevaRaza.setEspecie(razaRq.getEspecie());
+        nuevaRaza.setNombre(razaRq.getNombre());
+        nuevaRaza.setFechaCreacion(LocalDateTime.now());
+        this.razaRepository.save(nuevaRaza);
 
-        Raza razaNueva = new Raza();
-        razaNueva.setNombre(razaRq.getNombre());
-        razaNueva.setEspecie(razaRq.getEspecie());
-        razaNueva.setFechaCreacion(LocalDateTime.now());
-        this.razaRepository.save(razaNueva);
-
-        MiRespuestaRS rta = new MiRespuestaRS();
-        rta.setStatus(200);
-        rta.setMessage("Raza creada exitosamente");
-
-        return rta;
+        MiRespuestaRS respuesta = new MiRespuestaRS();
+        respuesta.setStatus(200);
+        respuesta.setMessage("Raza creada correctamente");
+        return respuesta;
     }
 
-    private void validarObjetoEntrada(RazaRq razaRq) throws BadRequestException {
-        if (razaRq == null) {
-            throw new BadRequestException("El objeto RazaRq no puede ser nulo");
-        }
+    @Override
+    public List<Raza> listarRazas() throws BadRequestException {
+        return razaRepository.findAll().stream().sorted((r1, r2) -> r1.getNombre().compareToIgnoreCase(r2
+                .getNombre())).toList();
+    }
 
+    private void validarRazaRq(RazaRq razaRq) throws BadRequestException {
         if (razaRq.getNombre() == null || razaRq.getNombre().isEmpty()) {
-            throw new BadRequestException("El nombre de la raza no puede ser nulo o vacío");
+            throw new BadRequestException("El nombre de la raza es obligatorio.");
         }
-
         if (razaRq.getEspecie() == null || razaRq.getEspecie().isEmpty()) {
-            throw new BadRequestException("La especie de la raza no puede ser nulo o vacío");
+            throw new BadRequestException("La especie de la raza es obligatoria.");
         }
     }
 }

@@ -18,27 +18,29 @@ import java.time.LocalDateTime;
 public class Mascota {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "mascota_id")
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer mascotaId;
 
-    @Column(name = "nombre_mascota", nullable = false, length = 100)
+    @Column(name = "nombre_mascota")
     private String nombreMascota;
 
-    @Column(name = "edad", nullable = false)
+    @Column(name = "edad")
     private Integer edad;
 
-    @ManyToOne
-    @JoinColumn(name = "raza_id", nullable = false)
-    private Raza raza;
-
-    @Column(name = "fecha_registro", nullable = false)
+    @Column(name = "fecha_registro")
     private LocalDateTime fechaRegistro;
 
     @Column(name = "fecha_modificacion")
     private LocalDateTime fechaModificacion;
 
     @ManyToOne
-    @JoinColumn(name = "cliente_id", nullable = false)
+    @JoinColumn(name = "cliente_id")
     private Cliente cliente;
+
+    @ManyToOne
+    @JoinColumn(name = "raza_id")
+    private Raza raza;
+
+
 }

@@ -1,10 +1,16 @@
 package com.uniminuto.clinica.service;
 
+import com.uniminuto.clinica.entity.Raza;
+import com.uniminuto.clinica.exception.BadRequestException;
+import com.uniminuto.clinica.models.MascotaRq;
 import com.uniminuto.clinica.models.MiRespuestaRS;
 import com.uniminuto.clinica.models.RazaRq;
-import org.apache.coyote.BadRequestException;
+
+import java.util.List;
 
 public interface RazaService {
 
-    MiRespuestaRS guardarRazaNueva(RazaRq razaRq) throws BadRequestException;
+    MiRespuestaRS crearRazaNueva(RazaRq razaRq) throws BadRequestException;
+
+    List<Raza> listarRazas() throws BadRequestException;
 }

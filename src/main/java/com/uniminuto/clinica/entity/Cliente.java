@@ -14,19 +14,18 @@ import java.time.LocalDate;
 @Table(name = "cliente")
 @Data
 public class Cliente {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "cliente_id")
-    private Long clienteId;
+    private Long id;
 
-    @Column(name = "usuario_id")
+    @Column(name = "usuario_id", unique = true)
     private Integer usuarioId;
 
     @Column(name = "tipo_documento", nullable = false, length = 10)
     private String tipoDocumento;
 
-    @Column(name = "numero_documento", nullable = false, length = 20)
+    @Column(name = "numero_documento", nullable = false, unique = true, length = 20)
     private String numeroDocumento;
 
     @Column(name = "nombres", nullable = false, length = 100)
@@ -49,5 +48,4 @@ public class Cliente {
 
     @Column(name = "activo", nullable = false)
     private Boolean activo;
-
 }

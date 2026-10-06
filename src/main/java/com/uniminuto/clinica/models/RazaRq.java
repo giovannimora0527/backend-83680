@@ -6,7 +6,8 @@ import lombok.Data;
 public class RazaRq {
 
     private Integer razaId;
-    private String nombre;
-    private String especie;
 
+    private String nombre;
+
+    private String especie;
 }

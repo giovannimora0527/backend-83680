@@ -1,42 +1,37 @@
 package com.uniminuto.clinica.entity;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.Data;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
-@Data
 @Table(name = "medicamento")
+@Data
 public class Medicamento {
 
     @Id
-    @Column(name = "id")
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id", nullable = false, updatable = false)
     private Long id;
 
-    @Column(name = "nombre")
+    @Column(name = "nombre", nullable = false, length = 100, unique = true)
     private String nombre;
 
-    @Column(name = "descripcion")
+    @Column(name = "descripcion", columnDefinition = "TEXT")
     private String descripcion;
 
-    @Column(name = "presentacion")
+    @Column(name = "presentacion", length = 100)
     private String presentacion;
 
-    @Column(name = "fecha_compra")
+    @Column(name = "fecha_compra", nullable = false)
     private LocalDate fechaCompra;
 
-    @Column(name = "fecha_vence")
+    @Column(name = "fecha_vence", nullable = false)
     private LocalDate fechaVence;
 
-    @Column(name = "fecha_creacion_registro")
+    @Column(name = "fecha_creacion_registro", nullable = false)
     private LocalDateTime fechaCreacionRegistro;
 
     @Column(name = "fecha_modificacion_registro")
