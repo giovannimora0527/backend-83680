@@ -1,6 +1,9 @@
 package com.uniminuto.clinica.serviceimpl;
 
 import com.uniminuto.clinica.entity.Raza;
+import java.util.List;
+
+import com.uniminuto.clinica.entity.Raza;
 import com.uniminuto.clinica.exception.BadRequestException;
 import com.uniminuto.clinica.models.MiRespuestaRS;
 import com.uniminuto.clinica.models.RazaRq;
@@ -69,5 +72,10 @@ public class RazaServiceImpl implements RazaService {
         if (razaRq.getEspecie() == null || razaRq.getEspecie().isEmpty()) {
             throw new BadRequestException("La especie de la raza no puede ser nulo o vacío");
         }
+    }
+
+    @Override
+    public List<Raza> listarRazas() {
+        return razaRepository.findAllByOrderByNombreAsc();
     }
 }

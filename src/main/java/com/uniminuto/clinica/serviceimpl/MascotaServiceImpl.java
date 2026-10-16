@@ -219,4 +219,16 @@ public class MascotaServiceImpl implements MascotaService {
     }
 
 
+
+    @Override
+    public Mascota consultarMascota(Integer mascotaId) {
+        if (mascotaId == null || mascotaId <= 0) {
+            throw new BadRequestException("El ID de la mascota no puede ser nulo o menor que 1");
+        }
+        Optional<Mascota> optMascota = mascotaRepository.findById(mascotaId);
+        if (optMascota.isEmpty()) {
+            throw new BadRequestException("Mascota no encontrada");
+        }
+        return optMascota.get();
+    }
 }

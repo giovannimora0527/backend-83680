@@ -50,4 +50,12 @@ public interface MascotaService {
      */
     MiRespuestaRS actualizarMascota(MascotaRq mascotaRq);
 
+
+    /**
+     * Busca una mascota por su id.
+     *
+     * @param mascotaId id de la mascota.
+     * @return la mascota, o error si no existe.
+     */
+    Mascota consultarMascota(Integer mascotaId);
 }

@@ -1,5 +1,8 @@
 package com.uniminuto.clinica.apicontroller;
 
+import com.uniminuto.clinica.entity.Raza;
+import java.util.List;
+
 import com.uniminuto.clinica.api.RazaApi;
 import com.uniminuto.clinica.models.MiRespuestaRS;
 import com.uniminuto.clinica.models.RazaRq;
@@ -29,5 +32,10 @@ public class RazaApiController implements RazaApi {
     @Override
     public ResponseEntity<MiRespuestaRS> guardarRaza(RazaRq razaRq) {
         return ResponseEntity.ok(this.razaService.guardarRazaNueva(razaRq));
+    }
+
+    @Override
+    public ResponseEntity<List<Raza>> listarRazas() {
+        return ResponseEntity.ok(this.razaService.listarRazas());
     }
 }

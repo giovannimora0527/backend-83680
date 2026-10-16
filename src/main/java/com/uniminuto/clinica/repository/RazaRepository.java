@@ -3,6 +3,8 @@ package com.uniminuto.clinica.repository;
 import com.uniminuto.clinica.entity.Raza;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.util.List;
+
 /**
  * Repositorio de las razas.
  */
@@ -17,4 +19,11 @@ public interface RazaRepository extends JpaRepository<Raza, Integer> {
      */
     boolean existsByNombreAndEspecie(String nombre, String especie);
 
+
+    /**
+     * Lista las razas ordenadas por nombre.
+     *
+     * @return razas ordenadas.
+     */
+    List<Raza> findAllByOrderByNombreAsc();
 }

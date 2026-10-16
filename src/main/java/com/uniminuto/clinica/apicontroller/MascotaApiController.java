@@ -76,4 +76,9 @@ public class MascotaApiController implements MascotaApi {
     public ResponseEntity<MiRespuestaRS> actualizarMascota(MascotaRq mascotaRq) {
         return ResponseEntity.ok(mascotaService.actualizarMascota(mascotaRq));
     }
+
+    @Override
+    public ResponseEntity<Mascota> consultarMascota(Integer mascotaId) {
+        return ResponseEntity.ok(mascotaService.consultarMascota(mascotaId));
+    }
 }

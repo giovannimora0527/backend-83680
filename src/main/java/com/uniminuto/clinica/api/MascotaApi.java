@@ -74,4 +74,15 @@ public interface MascotaApi {
             consumes = {"application/json"})
     ResponseEntity<MiRespuestaRS> actualizarMascota(
             @RequestBody MascotaRq mascotaRq);
+
+    /**
+     * Consulta una mascota por su id.
+     *
+     * @param mascotaId id de la mascota.
+     * @return la mascota encontrada.
+     */
+    @GetMapping(value = "/consultar",
+            produces = {"application/json"})
+    ResponseEntity<Mascota> consultarMascota(
+            @RequestParam Integer mascotaId);
 }
