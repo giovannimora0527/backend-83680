@@ -6,6 +6,7 @@ import com.uniminuto.clinica.models.FormulaMedicaRq;
 import com.uniminuto.clinica.models.MiRespuestaRS;
 import com.uniminuto.clinica.service.FormulaMedicaService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -20,14 +21,32 @@ public class FormulaMedicaApiController implements FormulaMedicaApi {
     private FormulaMedicaService formulaMedicaService;
 
     @Override
-    /** Delega la creación de una fórmula médica. */
+    /** Delega la creación de una fórmula médica y responde 201 (Created). */
     public ResponseEntity<MiRespuestaRS> crearFormulaMedica(FormulaMedicaRq formulaRq) {
-        return ResponseEntity.ok(formulaMedicaService.crearFormulaMedica(formulaRq));
+        return ResponseEntity.status(HttpStatus.CREATED).body(formulaMedicaService.crearFormulaMedica(formulaRq));
     }
 
     @Override
     /** Delega la consulta de fórmulas médicas. */
     public ResponseEntity<List<FormulaMedica>> listarFormulasMedicas() {
         return ResponseEntity.ok(formulaMedicaService.listarFormulasMedicas());
+    }
+
+    @Override
+    /** Delega la consulta de una fórmula médica. */
+    public ResponseEntity<FormulaMedica> consultarFormulaMedica(Long formulaId) {
+        return ResponseEntity.ok(formulaMedicaService.consultarFormulaMedica(formulaId));
+    }
+
+    @Override
+    /** Delega la actualización de una fórmula médica. */
+    public ResponseEntity<MiRespuestaRS> actualizarFormulaMedica(FormulaMedicaRq formulaRq) {
+        return ResponseEntity.ok(formulaMedicaService.actualizarFormulaMedica(formulaRq));
+    }
+
+    @Override
+    /** Delega la inactivación de una fórmula médica. */
+    public ResponseEntity<MiRespuestaRS> inactivarFormulaMedica(Long formulaId) {
+        return ResponseEntity.ok(formulaMedicaService.inactivarFormulaMedica(formulaId));
     }
 }

@@ -13,4 +13,13 @@ public interface FormulaMedicaService {
 
     /** Lista las fórmulas médicas registradas. */
     List<FormulaMedica> listarFormulasMedicas();
+
+    /** Consulta una fórmula médica por su identificador. */
+    FormulaMedica consultarFormulaMedica(Long formulaId);
+
+    /** Actualiza los datos permitidos de una fórmula médica. */
+    MiRespuestaRS actualizarFormulaMedica(FormulaMedicaRq formulaRq);
+
+    /** Inactiva una fórmula médica en lugar de eliminarla. */
+    MiRespuestaRS inactivarFormulaMedica(Long formulaId);
 }
