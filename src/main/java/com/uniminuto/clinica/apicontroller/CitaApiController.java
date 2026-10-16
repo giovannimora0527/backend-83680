@@ -13,48 +13,42 @@ import java.time.LocalDate;
 import java.util.List;
 
 /**
- * Controlador de los servicios de las citas.
+ * Controlador de las citas, solo delega al servicio.
  */
 @RestController
 public class CitaApiController implements CitaApi {
 
-    /**
-     * Servicio con la logica de las citas.
-     */
+    /** Servicio con la logica de las citas. */
     @Autowired
     private CitaService citaService;
 
-    /**
-     * Lista las citas entre dos fechas.
-     *
-     * @param fechaInicial primer dia del rango.
-     * @param fechaFinal   ultimo dia del rango.
-     * @return las citas del rango.
-     */
     @Override
     public ResponseEntity<List<CitaRs>> listarCitasPorFechas(LocalDate fechaInicial, LocalDate fechaFinal) {
         return ResponseEntity.ok(citaService.listarCitasPorFechas(fechaInicial, fechaFinal));
     }
 
-    /**
-     * Guarda una cita nueva.
-     *
-     * @param citaRq datos de la cita.
-     * @return respuesta de exito.
-     */
+    @Override
+    public ResponseEntity<List<CitaRs>> listarCitasPorMascota(Integer mascotaId) {
+        return ResponseEntity.ok(citaService.listarCitasPorMascota(mascotaId));
+    }
+
+    @Override
+    public ResponseEntity<CitaRs> consultarCita(Long citaId) {
+        return ResponseEntity.ok(citaService.consultarCita(citaId));
+    }
+
     @Override
     public ResponseEntity<MiRespuestaRS> guardarCita(CitaRq citaRq) {
         return ResponseEntity.ok(citaService.guardarCita(citaRq));
     }
 
-    /**
-     * Actualiza una cita que ya existe.
-     *
-     * @param citaRq datos de la cita.
-     * @return respuesta de exito.
-     */
     @Override
     public ResponseEntity<MiRespuestaRS> actualizarCita(CitaRq citaRq) {
         return ResponseEntity.ok(citaService.actualizarCita(citaRq));
+    }
+
+    @Override
+    public ResponseEntity<MiRespuestaRS> reactivarCita(Long citaId) {
+        return ResponseEntity.ok(citaService.reactivarCita(citaId));
     }
 }

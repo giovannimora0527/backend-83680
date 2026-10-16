@@ -8,6 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -23,17 +24,40 @@ import java.util.List;
 public interface CitaApi {
 
     /**
-     * Lista las citas entre dos fechas, de la mas reciente a la mas antigua.
+     * Lista las citas de la mas reciente a la mas antigua.
+     * Si no se envian fechas se listan todas.
      *
-     * @param fechaInicial primer dia del rango (formato yyyy-MM-dd).
-     * @param fechaFinal   ultimo dia del rango (formato yyyy-MM-dd).
-     * @return las citas del rango.
+     * @param fechaInicial primer dia del rango (formato yyyy-MM-dd), opcional.
+     * @param fechaFinal   ultimo dia del rango (formato yyyy-MM-dd), opcional.
+     * @return las citas.
      */
     @GetMapping(value = "/listar",
             produces = {"application/json"})
     ResponseEntity<List<CitaRs>> listarCitasPorFechas(
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaInicial,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaFinal);
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaInicial,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaFinal);
+
+    /**
+     * Lista las citas de una mascota (sirve para los combos de historia y formula).
+     *
+     * @param mascotaId id de la mascota.
+     * @return las citas de la mascota.
+     */
+    @GetMapping(value = "/listar-by-mascota",
+            produces = {"application/json"})
+    ResponseEntity<List<CitaRs>> listarCitasPorMascota(
+            @RequestParam Integer mascotaId);
+
+    /**
+     * Consulta una cita por su id.
+     *
+     * @param citaId id de la cita.
+     * @return la cita.
+     */
+    @GetMapping(value = "/consultar",
+            produces = {"application/json"})
+    ResponseEntity<CitaRs> consultarCita(
+            @RequestParam Long citaId);
 
     /**
      * Guarda una cita nueva.
@@ -53,9 +77,20 @@ public interface CitaApi {
      * @param citaRq datos de la cita, incluido su id y su estado.
      * @return respuesta de exito.
      */
-    @PostMapping(value = "/actualizar",
+    @PutMapping(value = "/actualizar",
             produces = {"application/json"},
             consumes = {"application/json"})
     ResponseEntity<MiRespuestaRS> actualizarCita(
             @RequestBody CitaRq citaRq);
+
+    /**
+     * Reactiva una cita cancelada (operacion explicita). Queda en estado pendiente.
+     *
+     * @param citaId id de la cita cancelada.
+     * @return respuesta de exito.
+     */
+    @PutMapping(value = "/reactivar",
+            produces = {"application/json"})
+    ResponseEntity<MiRespuestaRS> reactivarCita(
+            @RequestParam Long citaId);
 }
