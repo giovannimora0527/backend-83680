@@ -70,19 +70,7 @@ public class AnotacionHistoriaServiceImpl implements AnotacionHistoriaService {
         List<AnotacionHistoria> anotaciones = anotacionRepository.findByFechaBetweenOrderByFechaDesc(inicio, fin);
 
         // Paso 4. Convertir cada anotacion al objeto de respuesta
-        List<AnotacionHistoriaRs> respuesta = new ArrayList<>();
-        for (AnotacionHistoria anotacion : anotaciones) {
-            AnotacionHistoriaRs rs = new AnotacionHistoriaRs();
-            rs.setId(anotacion.getId());
-            rs.setHistoriaId(anotacion.getHistoria().getId());
-            rs.setMedicoId(anotacion.getMedico().getId());
-            rs.setMedicoNombre(anotacion.getMedico().getNombres() + " " + anotacion.getMedico().getApellidos());
-            rs.setFecha(anotacion.getFecha());
-            rs.setDescripcion(anotacion.getDescripcion());
-            respuesta.add(rs);
-        }
-
-        return respuesta;
+        return this.convertirLista(anotaciones);
     }
 
     /**
@@ -116,6 +104,8 @@ public class AnotacionHistoriaServiceImpl implements AnotacionHistoriaService {
         anotacion.setHistoria(optHistoria.get());
         anotacion.setMedico(optMedico.get());
         anotacion.setDescripcion(anotacionRq.getDescripcion());
+        anotacion.setObservacion(anotacionRq.getObservacion());
+        anotacion.setDiagnostico(anotacionRq.getDiagnostico());
         anotacion.setFecha(LocalDateTime.now());
 
         // Paso 4. Guardar la anotacion
@@ -159,6 +149,8 @@ public class AnotacionHistoriaServiceImpl implements AnotacionHistoriaService {
         AnotacionHistoria anotacionActualizar = optAnotacion.get();
         anotacionActualizar.setMedico(optMedico.get());
         anotacionActualizar.setDescripcion(anotacionRq.getDescripcion());
+        anotacionActualizar.setObservacion(anotacionRq.getObservacion());
+        anotacionActualizar.setDiagnostico(anotacionRq.getDiagnostico());
 
         // Paso 4. Guardar la anotacion actualizada
         this.anotacionRepository.save(anotacionActualizar);
@@ -188,5 +180,43 @@ public class AnotacionHistoriaServiceImpl implements AnotacionHistoriaService {
         if (anotacionRq.getDescripcion() == null || anotacionRq.getDescripcion().isBlank()) {
             throw new BadRequestException("La descripción de la anotación no puede ser nula o vacía");
         }
+        if (anotacionRq.getDiagnostico() == null || anotacionRq.getDiagnostico().isBlank()) {
+            throw new BadRequestException("El diagnóstico o evolución de la anotación es obligatorio");
+        }
+    }
+
+    @Override
+    public List<AnotacionHistoriaRs> listarAnotacionesPorHistoria(Long historiaId) {
+        if (historiaId == null || historiaId <= 0) {
+            throw new BadRequestException("El ID de la historia no puede ser nulo o menor que 1");
+        }
+        if (!historiaRepository.existsById(historiaId)) {
+            throw new BadRequestException("Historia médica no encontrada");
+        }
+        return this.convertirLista(anotacionRepository.findByHistoriaIdOrderByFechaDesc(historiaId));
+    }
+
+    /**
+     * Convierte las entidades al objeto de respuesta.
+     *
+     * @param anotaciones entidades.
+     * @return lista de respuesta.
+     */
+    private List<AnotacionHistoriaRs> convertirLista(List<AnotacionHistoria> anotaciones) {
+        List<AnotacionHistoriaRs> respuesta = new ArrayList<>();
+        for (AnotacionHistoria anotacion : anotaciones) {
+            AnotacionHistoriaRs rs = new AnotacionHistoriaRs();
+            rs.setId(anotacion.getId());
+            rs.setHistoriaId(anotacion.getHistoria().getId());
+            rs.setMedicoId(anotacion.getMedico().getId());
+            rs.setMedicoNombre(anotacion.getMedico().getNombres() + " " + anotacion.getMedico().getApellidos());
+            rs.setFecha(anotacion.getFecha());
+            rs.setDescripcion(anotacion.getDescripcion());
+            rs.setObservacion(anotacion.getObservacion());
+            rs.setDiagnostico(anotacion.getDiagnostico());
+            respuesta.add(rs);
+        }
+
+        return respuesta;
     }
 }

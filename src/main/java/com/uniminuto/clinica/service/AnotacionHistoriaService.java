@@ -36,4 +36,12 @@ public interface AnotacionHistoriaService {
      * @return respuesta de exito.
      */
     MiRespuestaRS actualizarAnotacion(AnotacionHistoriaRq anotacionRq);
+
+    /**
+     * Lista las anotaciones de una historia clinica, de la mas reciente a la mas antigua.
+     *
+     * @param historiaId id de la historia.
+     * @return anotaciones de la historia.
+     */
+    List<AnotacionHistoriaRs> listarAnotacionesPorHistoria(Long historiaId);
 }

@@ -21,4 +21,12 @@ public interface AnotacionHistoriaRepository extends JpaRepository<AnotacionHist
      * @return las anotaciones del rango ordenadas.
      */
     List<AnotacionHistoria> findByFechaBetweenOrderByFechaDesc(LocalDateTime inicio, LocalDateTime fin);
+
+    /**
+     * Anotaciones de una historia, de la mas reciente a la mas antigua.
+     *
+     * @param historiaId id de la historia.
+     * @return anotaciones de la historia.
+     */
+    List<AnotacionHistoria> findByHistoriaIdOrderByFechaDesc(Long historiaId);
 }

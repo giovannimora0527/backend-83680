@@ -57,4 +57,9 @@ public class AnotacionHistoriaApiController implements AnotacionHistoriaApi {
     public ResponseEntity<MiRespuestaRS> actualizarAnotacion(AnotacionHistoriaRq anotacionRq) {
         return ResponseEntity.ok(anotacionHistoriaService.actualizarAnotacion(anotacionRq));
     }
+
+    @Override
+    public ResponseEntity<List<AnotacionHistoriaRs>> listarAnotacionesPorHistoria(Long historiaId) {
+        return ResponseEntity.ok(anotacionHistoriaService.listarAnotacionesPorHistoria(historiaId));
+    }
 }

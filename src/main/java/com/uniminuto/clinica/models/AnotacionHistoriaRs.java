@@ -39,4 +39,8 @@ public class AnotacionHistoriaRs {
      * Texto de la anotacion.
      */
     private String descripcion;
+    /** Observacion. */
+    private String observacion;
+    /** Diagnostico o evolucion. */
+    private String diagnostico;
 }

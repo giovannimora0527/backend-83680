@@ -27,4 +27,8 @@ public class AnotacionHistoriaRq {
      * Texto de la anotación.
      */
     private String descripcion;
+    /** Observacion. */
+    private String observacion;
+    /** Diagnostico o evolucion. */
+    private String diagnostico;
 }

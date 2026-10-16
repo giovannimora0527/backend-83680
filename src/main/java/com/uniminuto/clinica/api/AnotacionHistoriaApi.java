@@ -8,6 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -53,9 +54,20 @@ public interface AnotacionHistoriaApi {
      * @param anotacionRq datos de la anotacion, incluido su id.
      * @return respuesta de exito.
      */
-    @PostMapping(value = "/actualizar",
+    @PutMapping(value = "/actualizar",
             produces = {"application/json"},
             consumes = {"application/json"})
     ResponseEntity<MiRespuestaRS> actualizarAnotacion(
             @RequestBody AnotacionHistoriaRq anotacionRq);
+
+    /**
+     * Lista las anotaciones de una historia clinica, de la mas reciente a la mas antigua.
+     *
+     * @param historiaId id de la historia.
+     * @return anotaciones de la historia.
+     */
+    @GetMapping(value = "/listar-by-historia",
+            produces = {"application/json"})
+    ResponseEntity<List<AnotacionHistoriaRs>> listarAnotacionesPorHistoria(
+            @RequestParam Long historiaId);
 }

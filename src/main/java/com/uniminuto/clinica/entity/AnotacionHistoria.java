@@ -53,4 +53,12 @@ public class AnotacionHistoria {
      */
     @Column(name = "descripcion", nullable = false, columnDefinition = "TEXT")
     private String descripcion;
+
+    /** Observacion de la anotacion. */
+    @Column(name = "observacion", columnDefinition = "TEXT")
+    private String observacion;
+
+    /** Diagnostico o evolucion del paciente. */
+    @Column(name = "diagnostico", columnDefinition = "TEXT")
+    private String diagnostico;
 }
