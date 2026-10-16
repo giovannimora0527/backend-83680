@@ -10,10 +10,21 @@ import java.util.List;
 
 /** Define las operaciones de negocio para las citas. */
 public interface CitaService {
-    /** Lista citas dentro de un rango de fechas. */
+    /** Lista todas las citas o las de un rango de fechas. */
     List<Cita> listarCitasPorFecha(LocalDateTime fechaInicial, LocalDateTime fechaFinal) throws BadRequestException;
-    MiRespuestaRS crearCita(CitaRq citaRq) throws BadRequestException;
-    MiRespuestaRS actualizarCita(CitaRq citaRq) throws BadRequestException;
-}
+
+    /** Consulta una cita por su identificador. */
+    Cita consultarCita(Long citaId) throws BadRequestException;
+
+    /** Lista las citas de una mascota. */
+    List<Cita> listarCitasPorMascota(Integer mascotaId) throws BadRequestException;
+
     /** Crea una cita nueva. */
-    /** Actualiza una cita existente. */
+    MiRespuestaRS crearCita(CitaRq citaRq) throws BadRequestException;
+
+    /** Actualiza una cita existente según su estado. */
+    MiRespuestaRS actualizarCita(CitaRq citaRq) throws BadRequestException;
+
+    /** Reactiva una cita cancelada. */
+    MiRespuestaRS reactivarCita(Long citaId) throws BadRequestException;
+}

@@ -7,6 +7,7 @@ import com.uniminuto.clinica.models.MiRespuestaRS;
 import com.uniminuto.clinica.service.CitaService;
 import org.apache.coyote.BadRequestException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -29,14 +30,32 @@ public class CitaApiController implements CitaApi {
     }
 
     @Override
-    /** Delega la creación de una cita. */
+    /** Delega la consulta de una cita. */
+    public ResponseEntity<Cita> consultarCita(Long citaId) throws BadRequestException {
+        return ResponseEntity.ok(citaService.consultarCita(citaId));
+    }
+
+    @Override
+    /** Delega la consulta de las citas de una mascota. */
+    public ResponseEntity<List<Cita>> listarCitasPorMascota(Integer mascotaId) throws BadRequestException {
+        return ResponseEntity.ok(citaService.listarCitasPorMascota(mascotaId));
+    }
+
+    @Override
+    /** Delega la creación de una cita y responde 201 (Created). */
     public ResponseEntity<MiRespuestaRS> crearCita(CitaRq citaRq) throws BadRequestException {
-        return ResponseEntity.ok(citaService.crearCita(citaRq));
+        return ResponseEntity.status(HttpStatus.CREATED).body(citaService.crearCita(citaRq));
     }
 
     @Override
     /** Delega la actualización de una cita. */
     public ResponseEntity<MiRespuestaRS> actualizarCita(CitaRq citaRq) throws BadRequestException {
         return ResponseEntity.ok(citaService.actualizarCita(citaRq));
+    }
+
+    @Override
+    /** Delega la reactivación de una cita cancelada. */
+    public ResponseEntity<MiRespuestaRS> reactivarCita(Long citaId) throws BadRequestException {
+        return ResponseEntity.ok(citaService.reactivarCita(citaId));
     }
 }
