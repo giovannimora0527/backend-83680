@@ -15,6 +15,9 @@ public interface MascotaService {
 
     List<Mascota> listarMascotasPorCliente(Long clienteId) throws BadRequestException;
 
+    /** Consulta una mascota por su identificador. */
+    Mascota consultarMascota(Integer mascotaId) throws BadRequestException;
+
     List<Mascota> listarMascotasPorRaza(Integer razaId) throws BadRequestException;
 
     MiRespuestaRS guardarMascota(MascotaRq mascotaRq) throws BadRequestException;

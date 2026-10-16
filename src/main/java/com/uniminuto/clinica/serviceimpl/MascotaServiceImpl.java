@@ -4,6 +4,7 @@ import com.uniminuto.clinica.entity.Cliente;
 import com.uniminuto.clinica.entity.Mascota;
 import com.uniminuto.clinica.entity.Raza;
 import com.uniminuto.clinica.exception.BadRequestException;
+import com.uniminuto.clinica.exception.NotFoundException;
 import com.uniminuto.clinica.models.MascotaRq;
 import com.uniminuto.clinica.models.MiRespuestaRS;
 import com.uniminuto.clinica.repository.ClienteRepository;
@@ -50,10 +51,21 @@ public class MascotaServiceImpl implements MascotaService {
                 .findById(clienteId);
 
         if (optCliente.isEmpty()) {
-            throw new BadRequestException("Cliente no encontrado");
+            throw new NotFoundException("Cliente no encontrado");
         }
 
         return mascotaRepository.findAllByClienteOrderByNombreMascotaAsc(optCliente.get());
+    }
+
+    @Override
+    // Valida el identificador y devuelve la mascota si existe.
+    public Mascota consultarMascota(Integer mascotaId) throws BadRequestException {
+        if (mascotaId == null) {
+            throw new BadRequestException("El ID de la mascota no puede ser nulo");
+        }
+
+        return mascotaRepository.findById(mascotaId)
+                .orElseThrow(() -> new NotFoundException("Mascota no encontrada"));
     }
 
     @Override

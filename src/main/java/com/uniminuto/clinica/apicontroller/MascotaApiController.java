@@ -33,6 +33,12 @@ public class MascotaApiController implements MascotaApi {
     }
 
     @Override
+    /** Delega la consulta de una mascota. */
+    public ResponseEntity<Mascota> consultarMascota(Integer mascotaId) throws BadRequestException {
+        return ResponseEntity.ok(mascotaService.consultarMascota(mascotaId));
+    }
+
+    @Override
     /** Delega la consulta de mascotas por raza. */
     public ResponseEntity<List<Mascota>> buscarMascotasPorRaza(Integer razaId) throws BadRequestException {
         return ResponseEntity.ok(mascotaService.listarMascotasPorRaza(razaId));

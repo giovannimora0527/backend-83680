@@ -36,6 +36,19 @@ public interface MascotaApi {
             @RequestParam Long clienteId)
             throws BadRequestException;
 
+    /**
+     * Consulta una mascota por su identificador.
+     *
+     * @param mascotaId identificador de la mascota.
+     * @return mascota encontrada con su raza y cliente.
+     * @throws BadRequestException excepcion.
+     */
+    @GetMapping(value = "/consultar",
+            produces = {"application/json"})
+    ResponseEntity<Mascota> consultarMascota(
+            @RequestParam Integer mascotaId)
+            throws BadRequestException;
+
     // Busca las mascotas que pertenecen a una raza.
     @GetMapping(value = "/listar-by-raza",
             produces = {"application/json"},
