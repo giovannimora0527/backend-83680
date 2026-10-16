@@ -43,4 +43,12 @@ public class AnotacionHistoria {
     @Column(name = "descripcion", nullable = false, columnDefinition = "TEXT")
     /** Texto descriptivo de la anotación. */
     private String descripcion;
+
+    @Column(name = "observacion", columnDefinition = "TEXT")
+    /** Observación adicional del veterinario. */
+    private String observacion;
+
+    @Column(name = "diagnostico", columnDefinition = "TEXT")
+    /** Diagnóstico o evolución de la mascota. */
+    private String diagnostico;
 }

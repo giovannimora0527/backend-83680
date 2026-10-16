@@ -7,6 +7,7 @@ import com.uniminuto.clinica.models.MiRespuestaRS;
 import com.uniminuto.clinica.service.AnotacionHistoriaService;
 import org.apache.coyote.BadRequestException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -22,10 +23,10 @@ public class AnotacionHistoriaApiController implements AnotacionHistoriaApi {
     private  AnotacionHistoriaService anotacionHistoriaService;
 
     @Override
-    /** Recibe y delega la creación de una anotación. */
+    /** Recibe y delega la creación de una anotación, responde 201 (Created). */
     public ResponseEntity<MiRespuestaRS> crearAnotacion(AnotacionHistoriaRq anotacionRq)
             throws BadRequestException {
-        return ResponseEntity.ok(anotacionHistoriaService.crearAnotacion(anotacionRq));
+        return ResponseEntity.status(HttpStatus.CREATED).body(anotacionHistoriaService.crearAnotacion(anotacionRq));
     }
 
     @Override
@@ -33,6 +34,13 @@ public class AnotacionHistoriaApiController implements AnotacionHistoriaApi {
     public ResponseEntity<List<AnotacionHistoria>> listarAnotacionesPorFecha(
             LocalDateTime fechaInicial, LocalDateTime fechaFinal) throws BadRequestException {
         return ResponseEntity.ok(anotacionHistoriaService.listarAnotacionesPorFecha(fechaInicial, fechaFinal));
+    }
+
+    @Override
+    /** Delega la consulta de las anotaciones de una historia médica. */
+    public ResponseEntity<List<AnotacionHistoria>> listarAnotacionesPorHistoria(Long historiaMedicaId)
+            throws BadRequestException {
+        return ResponseEntity.ok(anotacionHistoriaService.listarAnotacionesPorHistoria(historiaMedicaId));
     }
 
     @Override

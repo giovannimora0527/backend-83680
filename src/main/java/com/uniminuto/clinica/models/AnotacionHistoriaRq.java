@@ -13,4 +13,8 @@ public class AnotacionHistoriaRq {
     private Long medicoId;
     /** Descripción de la anotación. */
     private String descripcion;
+    /** Observación adicional. */
+    private String observacion;
+    /** Diagnóstico o evolución de la mascota. */
+    private String diagnostico;
 }

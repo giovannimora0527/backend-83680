@@ -7,6 +7,7 @@ import com.uniminuto.clinica.models.MiRespuestaRS;
 import com.uniminuto.clinica.service.HistoriaMedicaService;
 import org.apache.coyote.BadRequestException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -27,10 +28,18 @@ public class HistoriaMedicaApiController implements HistoriaMedicaApi {
     }
 
     @Override
-    /** Delega la creación de una historia médica. */
+    /** Delega la consulta de una historia médica. */
+    public ResponseEntity<HistoriaMedica> consultarHistoriaMedica(Long historiaMedicaId)
+            throws BadRequestException {
+        return ResponseEntity.ok(historiaMedicaService.consultarHistoriaMedica(historiaMedicaId));
+    }
+
+    @Override
+    /** Delega la creación de una historia médica y responde 201 (Created). */
     public ResponseEntity<MiRespuestaRS> crearHistoriaMedica(HistoriaMedicaRq historiaMedicaRq)
             throws BadRequestException {
-        return ResponseEntity.ok(historiaMedicaService.crearHistoriaMedica(historiaMedicaRq));
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(historiaMedicaService.crearHistoriaMedica(historiaMedicaRq));
     }
 
     @Override

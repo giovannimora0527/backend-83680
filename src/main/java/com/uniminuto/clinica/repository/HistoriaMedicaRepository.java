@@ -7,9 +7,9 @@ import java.util.List;
 
 /** Permite consultar y guardar historias médicas. */
 public interface HistoriaMedicaRepository extends JpaRepository<HistoriaMedica, Long> {
-    /** Indica si el paciente ya tiene una historia médica. */
-    boolean existsByPacienteId(Integer pacienteId);
+    /** Indica si la cita ya tiene una historia médica. */
+    boolean existsByCita_Id(Long citaId);
 
-    /** Lista las historias desde la más reciente a la más antigua. */
-    List<HistoriaMedica> findAllByOrderByFechaCreacionDesc();
+    /** Lista las historias desde la consulta más reciente a la más antigua. */
+    List<HistoriaMedica> findAllByOrderByFechaHoraDesc();
 }

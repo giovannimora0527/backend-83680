@@ -12,8 +12,13 @@ import java.util.List;
 public interface AnotacionHistoriaService {
     /** Crea una anotación. */
     MiRespuestaRS crearAnotacion(AnotacionHistoriaRq anotacionRq) throws BadRequestException;
+
+    /** Lista anotaciones dentro de un rango de fechas. */
     List<AnotacionHistoria> listarAnotacionesPorFecha(LocalDateTime fechaInicial, LocalDateTime fechaFinal) throws BadRequestException;
+
+    /** Lista las anotaciones de una historia médica. */
+    List<AnotacionHistoria> listarAnotacionesPorHistoria(Long historiaMedicaId) throws BadRequestException;
+
+    /** Actualiza una anotación existente. */
     MiRespuestaRS actualizarAnotacion(AnotacionHistoriaRq anotacionRq) throws BadRequestException;
 }
-    /** Lista anotaciones dentro de un rango de fechas. */
-    /** Actualiza una anotación existente. */
