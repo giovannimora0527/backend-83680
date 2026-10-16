@@ -110,7 +110,7 @@ public class GlobalExceptionHandler {
         ErrorResponse error = new ErrorResponse(
                 HttpStatus.INTERNAL_SERVER_ERROR.value(),
                 "INTERNAL SERVER_ERROR",
-                ex.getMessage()
+                "Ocurrió un error inesperado, intente de nuevo más tarde"
         );
 
         return ResponseEntity
