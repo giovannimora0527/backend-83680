@@ -10,6 +10,7 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.Data;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 /**
@@ -65,4 +66,25 @@ public class FormulaMedica {
      */
     @Column(name = "fecha_actualizacion_registro")
     private LocalDateTime fechaActualizacionRegistro;
+
+    /** Veterinario que emite la formula. */
+    @ManyToOne
+    @JoinColumn(name = "medico_id")
+    private Medico medico;
+
+    /** Cada cuanto se da el medicamento (ej: cada 8 horas). */
+    @Column(name = "frecuencia", length = 100)
+    private String frecuencia;
+
+    /** Duracion del tratamiento en dias. */
+    @Column(name = "duracion_dias")
+    private Integer duracionDias;
+
+    /** Fecha de emision de la formula. */
+    @Column(name = "fecha_emision")
+    private LocalDate fechaEmision;
+
+    /** true = vigente, false = inactiva. Las formulas no se borran fisicamente. */
+    @Column(name = "activo", nullable = false)
+    private Boolean activo;
 }

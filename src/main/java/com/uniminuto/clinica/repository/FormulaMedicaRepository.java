@@ -7,16 +7,24 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 
 /**
- * Repositorio de acceso a los datos de las fórmulas médicas.
+ * Repositorio de la tabla formula_medica.
  */
 @Repository
 public interface FormulaMedicaRepository extends JpaRepository<FormulaMedica, Long> {
 
     /**
-     * Obtiene todas las fórmulas médicas ordenadas por fecha de creación,
-     * de la más reciente a la más antigua.
+     * Formulas ordenadas por fecha de creacion, de la mas reciente a la mas antigua.
      *
-     * @return la lista de fórmulas médicas ordenada.
+     * @return formulas ordenadas.
      */
     List<FormulaMedica> findAllByOrderByFechaCreacionRegistroDesc();
+
+    /**
+     * Revisa si ya hay una formula activa con el mismo medicamento para la misma cita.
+     *
+     * @param citaId        id de la cita.
+     * @param medicamentoId id del medicamento.
+     * @return true si ya existe.
+     */
+    boolean existsByCitaIdAndMedicamentoIdAndActivoTrue(Long citaId, Long medicamentoId);
 }
