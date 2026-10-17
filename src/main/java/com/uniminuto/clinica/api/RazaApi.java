@@ -38,8 +38,7 @@ public interface RazaApi {
      * @throws BadRequestException excepcion.
      */
     @GetMapping(value = "/listar",
-            produces = {"application/json"},
-            consumes = {"application/json"})
+            produces = {"application/json"})
     ResponseEntity<List<Raza>> listarRazas()
             throws BadRequestException;
 }

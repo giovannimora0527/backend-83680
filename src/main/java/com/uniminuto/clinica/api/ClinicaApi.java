@@ -31,8 +31,7 @@ public interface ClinicaApi {
             throws BadRequestException;
 
     @GetMapping(value = "/test3",
-            produces = {"application/json"},
-            consumes = {"application/json"})
+            produces = {"application/json"})
     ResponseEntity<MiRespuestaRS> testService3()
             throws BadRequestException;
 }

@@ -14,8 +14,7 @@ import java.util.List;
 public interface ClienteApi {
 
     @GetMapping(value = "/listar",
-            produces = {"application/json"},
-            consumes = {"application/json"})
+            produces = {"application/json"})
     ResponseEntity<List<Cliente>> listarClientes()
             throws BadRequestException;
 }

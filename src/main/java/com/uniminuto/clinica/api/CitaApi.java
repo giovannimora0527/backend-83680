@@ -21,8 +21,7 @@ public interface CitaApi {
      * @throws BadRequestException excepcion.
      */
     @GetMapping(value = "/listar",
-            produces = {"application/json"},
-            consumes = {"application/json"})
+            produces = {"application/json"})
     ResponseEntity<List<Cita>> listarCitas()
             throws BadRequestException;
 
@@ -34,8 +33,7 @@ public interface CitaApi {
      * @throws BadRequestException excepcion.
      */
     @GetMapping(value = "/listar-rango",
-            produces = {"application/json"},
-            consumes = {"application/json"})
+            produces = {"application/json"})
     ResponseEntity<List<Cita>> listarCitasRango(
             @RequestParam LocalDateTime fechaInicio,
             @RequestParam LocalDateTime fechaFin

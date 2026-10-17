@@ -22,8 +22,7 @@ public interface FormulaMedicaApi {
      * @throws BadRequestException excepcion.
      */
     @GetMapping(value = "/listar",
-            produces = {"application/json"},
-            consumes = {"application/json"})
+            produces = {"application/json"})
     ResponseEntity<List<FormulaMedica>> listarFormulas()
             throws BadRequestException;
 }
