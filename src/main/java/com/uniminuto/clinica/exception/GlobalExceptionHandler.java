@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
+import org.springframework.dao.DataIntegrityViolationException;
 
 /**
  * Traduce las excepciones a respuestas JSON consistentes con la forma
@@ -18,6 +19,18 @@ import org.springframework.web.servlet.resource.NoResourceFoundException;
 @Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+        /**
+     * Maneja violaciones de integridad de la base de datos (duplicados, llaves foráneas).
+     *
+     * @param ex excepción de integridad.
+     * @return respuesta 409 con un mensaje claro.
+     */
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<ErrorResponse> handleIntegridad(DataIntegrityViolationException ex) {
+        log.warn("Violacion de integridad de datos", ex);
+        return construir(HttpStatus.CONFLICT,
+                "No se pudo guardar: el registro entra en conflicto con datos existentes.");
+    }
 
     /**
      * Maneja los errores controlados de la aplicación (400, 404, 409 y 422).
