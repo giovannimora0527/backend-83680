@@ -3,7 +3,7 @@ package com.uniminuto.clinica.apicontroller;
 import com.uniminuto.clinica.api.MedicoApi;
 import com.uniminuto.clinica.entity.Medico;
 import com.uniminuto.clinica.service.MedicoService;
-import org.apache.coyote.BadRequestException;
+import com.uniminuto.clinica.exception.BadRequestException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;

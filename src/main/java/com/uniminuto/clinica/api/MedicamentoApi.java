@@ -1,7 +1,7 @@
 package com.uniminuto.clinica.api;
 
 import com.uniminuto.clinica.entity.Medicamento;
-import org.apache.coyote.BadRequestException;
+import com.uniminuto.clinica.exception.BadRequestException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
