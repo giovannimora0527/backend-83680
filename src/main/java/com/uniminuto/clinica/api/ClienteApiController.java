@@ -19,4 +19,9 @@ public class ClienteApiController implements ClienteApi {
     public ResponseEntity<List<Cliente>> listarClientes() throws BadRequestException {
         return ResponseEntity.ok(clienteService.listarClientes());
     }
+
+    @Override
+    public ResponseEntity<Cliente> buscarClientesPorDocumento(String documento) throws BadRequestException {
+        return ResponseEntity.ok(this.clienteService.buscarClientesPorDocumento(documento));
+    }
 }

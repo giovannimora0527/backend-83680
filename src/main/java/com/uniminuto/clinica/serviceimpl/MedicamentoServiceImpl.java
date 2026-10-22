@@ -1,10 +1,9 @@
 package com.uniminuto.clinica.serviceimpl;
 
-import com.uniminuto.clinica.api.MedicamentoApi;
 import com.uniminuto.clinica.entity.Medicamento;
+import com.uniminuto.clinica.exception.BadRequestException;
 import com.uniminuto.clinica.repository.MedicamentoRepository;
 import com.uniminuto.clinica.service.MedicamentoService;
-import org.apache.coyote.BadRequestException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -17,7 +16,9 @@ public class MedicamentoServiceImpl implements MedicamentoService {
     private MedicamentoRepository medicamentoRepository;
 
     @Override
-    public List<Medicamento> obtenerMedicamentos() throws BadRequestException {
-        return this.medicamentoRepository.findAll();
+    public List<Medicamento> listarMedicamentos() throws BadRequestException {
+        return medicamentoRepository.findAll().stream()
+                .sorted((m1, m2) -> m1.getNombre().compareToIgnoreCase(m2.getNombre()))
+                .toList();
     }
 }

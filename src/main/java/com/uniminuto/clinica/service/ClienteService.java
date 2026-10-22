@@ -8,4 +8,6 @@ import java.util.List;
 public interface ClienteService {
 
     List<Cliente> listarClientes() throws BadRequestException;
+
+    Cliente buscarClientesPorDocumento(String documento) throws BadRequestException;
 }

@@ -8,9 +8,9 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import lombok.Data;
 
+@Data
 @Entity
 @Table(name = "especializacion")
-@Data
 public class Especializacion {
 
     @Id
@@ -18,18 +18,12 @@ public class Especializacion {
     @Column(name = "id")
     private Long id;
 
-    @Column(
-            name = "nombre",
-            nullable = false,
-            length = 100,
-            unique = true
-    )
+    @Column(name = "nombre")
     private String nombre;
 
     @Column(name = "descripcion")
     private String descripcion;
 
-    @Column(name = "codigo_especializacion", nullable = false, length = 10, unique = true)
+    @Column(name = "codigo_especializacion")
     private String codigoEspecializacion;
-
 }
