@@ -1,0 +1,23 @@
+package com.uniminuto.clinica.api;
+
+import com.uniminuto.clinica.exception.BadRequestException;
+import com.uniminuto.clinica.models.AuthRq;
+import com.uniminuto.clinica.models.AuthRs;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+
+@CrossOrigin(origins = "*", allowedHeaders = "*")
+@RequestMapping("/auth")
+public interface AuthApi {
+
+   //AuthRq
+   @PostMapping(value = "/login",
+           produces = {"application/json"},
+           consumes = {"application/json"})
+   ResponseEntity<AuthRs> login(
+           @RequestBody AuthRq authRq)
+           throws BadRequestException;
+}
