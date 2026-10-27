@@ -8,6 +8,8 @@ import com.uniminuto.clinica.models.AuthRs;
 import com.uniminuto.clinica.models.LoginRs;
 import com.uniminuto.clinica.models.TokenRq;
 import com.uniminuto.clinica.repository.OtpTokenRepository;
+import com.uniminuto.clinica.repository.PerfilMenuRepository;
+import com.uniminuto.clinica.repository.PerfilRepository;
 import com.uniminuto.clinica.repository.UsuarioRepository;
 import com.uniminuto.clinica.service.AuthService;
 import com.uniminuto.clinica.service.EmailService;
@@ -39,6 +41,8 @@ public class AuthServiceImpl implements AuthService {
     @Autowired
     private EmailService emailService;
 
+    @Autowired
+    private Utilidades utilidades;
 
     @Override
     public AuthRs login(AuthRq authRq) throws BadRequestException {
@@ -86,7 +90,7 @@ public class AuthServiceImpl implements AuthService {
         OtpToken otpToken = this.validateOtpToken(tokenRq);
         LoginRs loginRs = new LoginRs();
         //  Genero el JWT Token para el usuario
-        String jwtToken = Utilidades.generarJwtToken(otpToken, jwtSecret);
+        String jwtToken = utilidades.crearJwtToken(otpToken, jwtSecret);
         loginRs.setToken(jwtToken);
         loginRs.setLogueoExitoso(Boolean.TRUE);
         return loginRs;
