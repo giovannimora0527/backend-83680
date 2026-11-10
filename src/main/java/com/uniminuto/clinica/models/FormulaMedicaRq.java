@@ -19,6 +19,8 @@ public class FormulaMedicaRq {
     private Long medicamentoId;
     /** Fecha de emisión de la fórmula. */
     private LocalDate fechaEmision;
+    /** Cantidad solicitada en la fórmula. */
+    private Integer cantidadSolicitada;
     /** Dosis indicada. */
     private String dosis;
     /** Frecuencia con la que se da el medicamento. */

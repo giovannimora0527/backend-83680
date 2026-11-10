@@ -49,6 +49,18 @@ public class FormulaMedica {
     /** Fecha en que se emite la fórmula. */
     private LocalDate fechaEmision;
 
+    @Column(name = "cantidad_solicitada", nullable = false)
+    /** Cantidad solicitada en la fórmula. */
+    private Integer cantidadSolicitada = 0;
+
+    @Column(name = "cantidad_entregada", nullable = false)
+    /** Cantidad entregada a la fecha. */
+    private Integer cantidadEntregada = 0;
+
+    @Column(name = "estado", nullable = false, length = 30)
+    /** Estado de la formulación/dispensación. */
+    private String estado = "FORMULADA";
+
     @Column(name = "dosis", nullable = false, columnDefinition = "TEXT")
     /** Dosis indicada para el medicamento. */
     private String dosis;
@@ -68,6 +80,10 @@ public class FormulaMedica {
     @Column(name = "activo", nullable = false)
     /** Indica si la fórmula está activa; las fórmulas no se eliminan, se inactivan. */
     private Boolean activo;
+
+    @Column(name = "fecha_dispensacion")
+    /** Fecha en la que se entregó la última cantidad. */
+    private LocalDateTime fechaDispenacion;
 
     @Column(name = "fecha_creacion_registro", nullable = false)
     /** Fecha de creación del registro. */

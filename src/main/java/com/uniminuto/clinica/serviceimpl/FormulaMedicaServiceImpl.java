@@ -5,6 +5,7 @@ import com.uniminuto.clinica.entity.FormulaMedica;
 import com.uniminuto.clinica.entity.Mascota;
 import com.uniminuto.clinica.entity.Medicamento;
 import com.uniminuto.clinica.entity.Medico;
+import com.uniminuto.clinica.entity.MovimientoMedicamento;
 import com.uniminuto.clinica.exception.BadRequestException;
 import com.uniminuto.clinica.exception.ConflictException;
 import com.uniminuto.clinica.exception.NotFoundException;
@@ -15,11 +16,14 @@ import com.uniminuto.clinica.repository.FormulaMedicaRepository;
 import com.uniminuto.clinica.repository.MascotaRepository;
 import com.uniminuto.clinica.repository.MedicamentoRepository;
 import com.uniminuto.clinica.repository.MedicoRepository;
+import com.uniminuto.clinica.repository.MovimientoMedicamentoRepository;
 import com.uniminuto.clinica.service.FormulaMedicaService;
+import com.uniminuto.clinica.service.MedicamentoService;
 import com.uniminuto.clinica.utils.Constantes;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -29,41 +33,40 @@ import java.util.List;
 public class FormulaMedicaServiceImpl implements FormulaMedicaService {
 
     @Autowired
-    /** Repositorio de fórmulas médicas. */
     private FormulaMedicaRepository formulaMedicaRepository;
 
     @Autowired
-    /** Repositorio de mascotas. */
     private MascotaRepository mascotaRepository;
 
     @Autowired
-    /** Repositorio de citas. */
     private CitaRepository citaRepository;
 
     @Autowired
-    /** Repositorio de médicos. */
     private MedicoRepository medicoRepository;
 
     @Autowired
-    /** Repositorio de medicamentos. */
     private MedicamentoRepository medicamentoRepository;
 
+    @Autowired
+    private MovimientoMedicamentoRepository movimientoMedicamentoRepository;
+
+    @Autowired
+    private MedicamentoService medicamentoService;
+
     @Override
-    // Valida las reglas de negocio, evita duplicados y guarda una nueva fórmula médica.
+    @Transactional
     public MiRespuestaRS crearFormulaMedica(FormulaMedicaRq formulaRq) {
         validarFormula(formulaRq);
         if (formulaRq.getMascotaId() == null || formulaRq.getCitaId() == null) {
             throw new BadRequestException("La mascota y la consulta (cita) son obligatorias");
         }
 
-        // Regla 1 y 2: la mascota debe existir y pertenecer a un cliente registrado y activo.
         Mascota mascota = mascotaRepository.findById(formulaRq.getMascotaId())
                 .orElseThrow(() -> new NotFoundException("Mascota no encontrada"));
         if (mascota.getCliente() == null || !Boolean.TRUE.equals(mascota.getCliente().getActivo())) {
             throw new BadRequestException("La mascota no pertenece a un cliente registrado");
         }
 
-        // Regla 7: la consulta debe ser de la misma mascota.
         Cita cita = citaRepository.findById(formulaRq.getCitaId())
                 .orElseThrow(() -> new NotFoundException("Cita no encontrada"));
         if (!cita.getMascota().getMascotaId().equals(mascota.getMascotaId())) {
@@ -82,6 +85,11 @@ public class FormulaMedicaServiceImpl implements FormulaMedicaService {
         formula.setMascota(mascota);
         formula.setCita(cita);
         asignarDatos(formula, formulaRq);
+        if (formula.getMedicamento().getCantidadDisponible() < formula.getCantidadSolicitada()) {
+            throw new BadRequestException("Inventario insuficiente para la cantidad formulada");
+        }
+        formula.setCantidadEntregada(0);
+        formula.setEstado("FORMULADA");
         formula.setActivo(true);
         formula.setFechaCreacionRegistro(LocalDateTime.now());
         formulaMedicaRepository.save(formula);
@@ -90,13 +98,11 @@ public class FormulaMedicaServiceImpl implements FormulaMedicaService {
     }
 
     @Override
-    // Consulta todas las fórmulas y las ordena por fecha de creación.
     public List<FormulaMedica> listarFormulasMedicas() {
         return formulaMedicaRepository.findAllByOrderByFechaCreacionRegistroDesc();
     }
 
     @Override
-    // Valida el identificador y devuelve la fórmula si existe.
     public FormulaMedica consultarFormulaMedica(Long formulaId) {
         if (formulaId == null) {
             throw new BadRequestException("El ID de la fórmula no puede ser nulo");
@@ -105,7 +111,7 @@ public class FormulaMedicaServiceImpl implements FormulaMedicaService {
     }
 
     @Override
-    // Actualiza los datos de la fórmula; la mascota y la consulta no se pueden cambiar.
+    @Transactional
     public MiRespuestaRS actualizarFormulaMedica(FormulaMedicaRq formulaRq) {
         validarFormula(formulaRq);
         if (formulaRq.getFormulaId() == null) {
@@ -122,6 +128,13 @@ public class FormulaMedicaServiceImpl implements FormulaMedicaService {
         }
 
         asignarDatos(formula, formulaRq);
+        if (formula.getCantidadSolicitada() < formula.getCantidadEntregada()) {
+            throw new BadRequestException("La cantidad solicitada no puede ser menor a la ya dispensada");
+        }
+        int cantidadPendiente = formula.getCantidadSolicitada() - formula.getCantidadEntregada();
+        if (formula.getMedicamento().getCantidadDisponible() < cantidadPendiente) {
+            throw new BadRequestException("Inventario insuficiente para la cantidad formulada");
+        }
         formula.setFechaActualizacionRegistro(LocalDateTime.now());
         formulaMedicaRepository.save(formula);
 
@@ -129,7 +142,6 @@ public class FormulaMedicaServiceImpl implements FormulaMedicaService {
     }
 
     @Override
-    // Regla 8: la fórmula hace parte de la información clínica, por eso se inactiva y no se borra.
     public MiRespuestaRS inactivarFormulaMedica(Long formulaId) {
         if (formulaId == null) {
             throw new BadRequestException("El ID de la fórmula es obligatorio para inactivar");
@@ -147,14 +159,65 @@ public class FormulaMedicaServiceImpl implements FormulaMedicaService {
         return respuesta(HttpStatus.OK.value(), "Fórmula médica inactivada correctamente");
     }
 
+    @Override
+    @Transactional
+    public MiRespuestaRS dispensarFormula(Long formulaId, Integer cantidad, String observacion) {
+        if (formulaId == null || formulaId <= 0) {
+            throw new BadRequestException("El identificador de la fórmula es obligatorio");
+        }
+        if (cantidad == null || cantidad <= 0) {
+            throw new BadRequestException("La cantidad a dispensar debe ser mayor que cero");
+        }
+
+        FormulaMedica formula = buscarFormula(formulaId);
+        if (!Boolean.TRUE.equals(formula.getActivo())) {
+            throw new ConflictException("No se puede dispensar una fórmula inactiva");
+        }
+
+        int restante = formula.getCantidadSolicitada() - formula.getCantidadEntregada();
+        if (cantidad > restante) {
+            throw new BadRequestException("La cantidad a dispensar supera el saldo pendiente de la fórmula");
+        }
+
+        Medicamento medicamento = formula.getMedicamento();
+        if (medicamento.getCantidadDisponible() < cantidad) {
+            throw new BadRequestException("Inventario insuficiente para la dispensación solicitada");
+        }
+
+        String motivo = observacion == null || observacion.isBlank()
+                ? "DISPENSACION"
+                : "DISPENSACION: " + observacion.trim();
+        medicamentoService.registrarSalidaInventario(
+                medicamento.getId(), cantidad, motivo, formula.getId(), "FORMULA");
+
+        formula.setCantidadEntregada(formula.getCantidadEntregada() + cantidad);
+        formula.setFechaDispenacion(LocalDateTime.now());
+        formula.setFechaActualizacionRegistro(LocalDateTime.now());
+        formula.setEstado(formula.getCantidadEntregada() >= formula.getCantidadSolicitada()
+                ? "ENTREGADA"
+                : "PARCIAL");
+        formulaMedicaRepository.save(formula);
+
+        return respuesta(HttpStatus.OK.value(), "Dispensación registrada correctamente");
+    }
+
+    @Override
+    public List<MovimientoMedicamento> consultarHistorialPorFormula(Long formulaId) {
+        if (formulaId == null || formulaId <= 0) {
+            throw new BadRequestException("El identificador de la fórmula es obligatorio");
+        }
+        FormulaMedica formula = buscarFormula(formulaId);
+        return movimientoMedicamentoRepository
+                .findByMedicamentoIdAndReferenciaTipoAndReferenciaIdOrderByFechaRegistroDesc(
+                        formula.getMedicamento().getId(), "FORMULA", formulaId);
+    }
+
     private void asignarDatos(FormulaMedica formula, FormulaMedicaRq formulaRq) {
-        // Regla 3: el veterinario debe existir. También se valida el medicamento.
         Medico medico = medicoRepository.findById(formulaRq.getMedicoId())
                 .orElseThrow(() -> new NotFoundException("Veterinario no encontrado"));
         Medicamento medicamento = medicamentoRepository.findById(formulaRq.getMedicamentoId())
                 .orElseThrow(() -> new NotFoundException("Medicamento no encontrado"));
 
-        // Regla 4: la fecha de emisión no puede ser anterior a la fecha de la consulta.
         if (formulaRq.getFechaEmision().isBefore(formula.getCita().getFechaHora().toLocalDate())) {
             throw new BadRequestException("La fecha de emisión no puede ser anterior a la fecha de la consulta");
         }
@@ -162,6 +225,7 @@ public class FormulaMedicaServiceImpl implements FormulaMedicaService {
         formula.setMedico(medico);
         formula.setMedicamento(medicamento);
         formula.setFechaEmision(formulaRq.getFechaEmision());
+        formula.setCantidadSolicitada(formulaRq.getCantidadSolicitada());
         formula.setDosis(formulaRq.getDosis().trim());
         formula.setFrecuencia(formulaRq.getFrecuencia().trim());
         formula.setDuracionDias(formulaRq.getDuracionDias());
@@ -169,24 +233,22 @@ public class FormulaMedicaServiceImpl implements FormulaMedicaService {
     }
 
     private FormulaMedica buscarFormula(Long formulaId) {
-        // Busca la fórmula o informa que no existe.
         return formulaMedicaRepository.findById(formulaId)
                 .orElseThrow(() -> new NotFoundException("Fórmula médica no encontrada"));
     }
 
     private void validarFormula(FormulaMedicaRq formulaRq) {
-        // Regla 6: campos obligatorios.
         if (formulaRq == null || formulaRq.getMedicoId() == null || formulaRq.getMedicamentoId() == null
                 || formulaRq.getFechaEmision() == null
+                || formulaRq.getCantidadSolicitada() == null || formulaRq.getCantidadSolicitada() <= 0
                 || formulaRq.getDosis() == null || formulaRq.getDosis().isBlank()
                 || formulaRq.getFrecuencia() == null || formulaRq.getFrecuencia().isBlank()
                 || formulaRq.getDuracionDias() == null
                 || formulaRq.getIndicaciones() == null || formulaRq.getIndicaciones().isBlank()) {
             throw new BadRequestException(
-                    "Veterinario, medicamento, fecha de emisión, dosis, frecuencia, duración e indicaciones son obligatorios");
+                    "Veterinario, medicamento, fecha, cantidad, dosis, frecuencia, duración e indicaciones son obligatorios");
         }
 
-        // Regla 5: la dosis debe indicar una cantidad y la duración debe ser un número de días válido.
         if (!formulaRq.getDosis().matches(".*\\d.*") || formulaRq.getDosis().trim().length() > 100) {
             throw new BadRequestException("La dosis debe indicar una cantidad, por ejemplo: 500 mg o 1 tableta");
         }
@@ -200,7 +262,6 @@ public class FormulaMedicaServiceImpl implements FormulaMedicaService {
     }
 
     private MiRespuestaRS respuesta(int status, String mensaje) {
-        // Crea una respuesta estándar para informar el resultado de la operación.
         MiRespuestaRS respuesta = new MiRespuestaRS();
         respuesta.setStatus(status);
         respuesta.setMessage(mensaje);

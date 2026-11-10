@@ -2,6 +2,7 @@ package com.uniminuto.clinica.apicontroller;
 
 import com.uniminuto.clinica.api.FormulaMedicaApi;
 import com.uniminuto.clinica.entity.FormulaMedica;
+import com.uniminuto.clinica.entity.MovimientoMedicamento;
 import com.uniminuto.clinica.models.FormulaMedicaRq;
 import com.uniminuto.clinica.models.MiRespuestaRS;
 import com.uniminuto.clinica.service.FormulaMedicaService;
@@ -48,5 +49,17 @@ public class FormulaMedicaApiController implements FormulaMedicaApi {
     /** Delega la inactivación de una fórmula médica. */
     public ResponseEntity<MiRespuestaRS> inactivarFormulaMedica(Long formulaId) {
         return ResponseEntity.ok(formulaMedicaService.inactivarFormulaMedica(formulaId));
+    }
+
+    @Override
+    /** Delega la dispensación real del medicamento asociado a la fórmula. */
+    public ResponseEntity<MiRespuestaRS> dispensarFormula(Long formulaId, Integer cantidad, String observacion) {
+        return ResponseEntity.ok(formulaMedicaService.dispensarFormula(formulaId, cantidad, observacion));
+    }
+
+    @Override
+    /** Delega la consulta del historial de movimientos de la fórmula. */
+    public ResponseEntity<List<MovimientoMedicamento>> consultarHistorialPorFormula(Long formulaId) {
+        return ResponseEntity.ok(formulaMedicaService.consultarHistorialPorFormula(formulaId));
     }
 }

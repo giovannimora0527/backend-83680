@@ -1,12 +1,14 @@
 package com.uniminuto.clinica.api;
 
 import com.uniminuto.clinica.entity.FormulaMedica;
+import com.uniminuto.clinica.entity.MovimientoMedicamento;
 import com.uniminuto.clinica.models.FormulaMedicaRq;
 import com.uniminuto.clinica.models.MiRespuestaRS;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -18,12 +20,7 @@ import java.util.List;
 @CrossOrigin(origins = "*", allowedHeaders = "*")
 @RequestMapping("/formula-medica")
 public interface FormulaMedicaApi {
-    /**
-     * Registra una nueva fórmula médica.
-     *
-     * @param formulaRq datos de la fórmula.
-     * @return respuesta con el resultado.
-     */
+    // Registra una nueva fórmula médica validando disponibilidad y cantidad solicitada.
     @PostMapping(value = "/guardar", produces = "application/json", consumes = "application/json")
     ResponseEntity<MiRespuestaRS> crearFormulaMedica(@RequestBody FormulaMedicaRq formulaRq);
 
@@ -61,4 +58,13 @@ public interface FormulaMedicaApi {
      */
     @PatchMapping(value = "/inactivar", produces = "application/json")
     ResponseEntity<MiRespuestaRS> inactivarFormulaMedica(@RequestParam Long formulaId);
+    // Registra la dispensación real del medicamento asociado a una fórmula.
+    @PostMapping(value = "/{formulaId}/dispensar", produces = "application/json")
+    ResponseEntity<MiRespuestaRS> dispensarFormula(@PathVariable Long formulaId,
+                                                @RequestParam Integer cantidad,
+                                                @RequestParam(required = false) String observacion);
+
+    // Consulta el historial de movimientos de inventario asociados a una fórmula.
+    @GetMapping(value = "/{formulaId}/historial", produces = "application/json")
+    ResponseEntity<List<MovimientoMedicamento>> consultarHistorialPorFormula(@PathVariable Long formulaId);
 }
