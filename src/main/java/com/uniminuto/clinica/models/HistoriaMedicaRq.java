@@ -3,9 +3,10 @@ package com.uniminuto.clinica.models;
 import lombok.Data;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Data
-/** Datos recibidos para gestionar una historia médica. */
+/** Datos recibidos para gestionar una historia médica (atención médica) y sus fórmulas opcionales. */
 public class HistoriaMedicaRq {
     /** Identificador de la historia cuando se actualiza. */
     private Long historiaMedicaId;
@@ -27,4 +28,6 @@ public class HistoriaMedicaRq {
     private String observaciones;
     /** Estado de la historia: ABIERTA o CERRADA. */
     private String estado;
+    /** Lista opcional de fórmulas médicas prescritas durante la atención médica. */
+    private List<FormulaMedicaRq> formulas;
 }

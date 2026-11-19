@@ -15,10 +15,14 @@ public class CitaRq {
     private Integer mascotaId;
     /** Identificador del médico. */
     private Long medicoId;
-    /** Fecha y hora de la cita. */
+    /** Fecha y hora de inicio de la cita. */
     private LocalDateTime fechaHora;
+    /** Fecha y hora de fin de la cita (opcional, por defecto +30 min). */
+    private LocalDateTime fechaHoraFin;
     /** Estado de la cita. */
     private String estado;
     /** Motivo de la consulta. */
     private String motivo;
+    /** Perfil o usuario que realiza la operación para trazabilidad. */
+    private String usuarioCambio;
 }

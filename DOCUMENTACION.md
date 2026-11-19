@@ -17,7 +17,8 @@ Cambios sobre la base entregada (archivo `database/script_parcial.sql`):
 
 | Tabla | Columnas agregadas |
 |---|---|
-| `cita` | Estados normalizados en mayúscula. Índices por veterinario/fecha y mascota/fecha. |
+| `cita` | Estados normalizados en mayúscula. Columnas `fecha_hora_fin`, `fecha_actualizacion`, `historial_cambios`. Índices por veterinario/fecha y mascota/fecha. |
+| `bloqueo_horario` | Bloqueos de agenda por veterinario (`medico_id`, `fecha_hora_inicio`, `fecha_hora_fin`, `motivo`, `activo`, `fecha_creacion`). |
 | `historia_medica` | `cliente_id`, `cita_id` (único), `medico_id`, `fecha_hora`, `motivo`, `diagnostico`, `observaciones`, `estado` (ABIERTA/CERRADA). `paciente_id` es la mascota. |
 | `anotacion_historia` | `observacion`, `diagnostico` (diagnóstico o evolución). |
 | `formula_medica` | `mascota_id`, `medico_id`, `fecha_emision`, `frecuencia`, `duracion_dias`, `activo`. Las fórmulas existentes toman la mascota y el veterinario de su cita. |
@@ -32,12 +33,17 @@ Cambios sobre la base entregada (archivo `database/script_parcial.sql`):
 | GET | `/mascota/consultar?mascotaId=` | Una mascota |
 | GET | `/medico/listar` | Veterinarios |
 | GET | `/medicamento/listar` | Medicamentos |
-| GET | `/cita/listar` | Citas (fecha y hora descendente). Acepta `fechaInicial` y `fechaFinal` opcionales |
+| GET | `/cita/listar` | Citas (fecha y hora descendente). Acepta `fechaInicial`, `fechaFinal`, `medicoId` y `estado` opcionales |
 | GET | `/cita/consultar?citaId=` | Una cita |
-| GET | `/cita/listar-by-mascota?mascotaId=` | Citas de una mascota |
-| POST | `/cita/guardar` | Crear cita |
-| PUT | `/cita/actualizar` | Editar cita según su estado |
+| GET | `/cita/listar-by-mascota?mascotaId=` | Historial de citas de una mascota |
+| POST | `/cita/guardar` | Crear cita validando disponibilidad y bloqueos de horario |
+| PUT | `/cita/actualizar` | Editar/reprogramar cita según su estado |
+| PATCH | `/cita/atender?citaId=` | Marcar una cita como atendida |
 | PATCH | `/cita/reactivar?citaId=` | Reactivar una cita cancelada |
+| GET | `/cita/exportar-excel` | Generar reporte Excel (`.xlsx`) de citas filtrado por `medicoId`, `fechaInicial`, `fechaFinal` y `estado` |
+| GET | `/cita/bloqueos` | Listar bloqueos de horario activos por veterinario y fechas |
+| POST | `/cita/bloqueos/guardar` | Registrar bloqueo de horario para un veterinario |
+| PATCH | `/cita/bloqueos/inactivar?bloqueoId=` | Liberar/inactivar un bloqueo de horario |
 | GET | `/historia-medica/listar` | Historias (fecha de consulta descendente) |
 | GET | `/historia-medica/consultar?historiaMedicaId=` | Una historia |
 | POST | `/historia-medica/guardar` | Crear historia desde una cita atendida |
@@ -45,10 +51,25 @@ Cambios sobre la base entregada (archivo `database/script_parcial.sql`):
 | GET | `/anotacion-historia/listar-by-historia?historiaMedicaId=` | Anotaciones de una historia (más reciente primero) |
 | POST | `/anotacion-historia/guardar` | Agregar anotación |
 | GET | `/formula-medica/listar` | Fórmulas (fecha de creación descendente) |
+| GET | `/formula-medica/listar-by-cita?citaId=` | Fórmulas prescritas en una atención / cita médica |
+| GET | `/formula-medica/listar-by-mascota?mascotaId=` | Fórmulas históricas de una mascota |
 | GET | `/formula-medica/consultar?formulaId=` | Detalle de una fórmula |
-| POST | `/formula-medica/guardar` | Crear fórmula |
+| POST | `/formula-medica/guardar` | Crear fórmula (valida inventario sin descontar stock) |
 | PUT | `/formula-medica/actualizar` | Editar fórmula activa |
-| PATCH | `/formula-medica/inactivar?formulaId=` | Inactivar fórmula (no se borra) |
+| PATCH | `/formula-medica/inactivar?formulaId=` | Inactivar fórmula (no se borra; solo si no tiene entregas) |
+| POST | `/formula-medica/{formulaId}/dispensar` | Confirmar dispensación (parcial o total) y descontar inventario |
+| GET | `/formula-medica/{formulaId}/historial` | Movimientos de salida de inventario asociados a la fórmula |
+| GET | `/factura/listar` | Facturas (acepta `clienteId`, `mascotaId`, `estado`, `fechaInicial`, `fechaFinal`) |
+| GET | `/factura/consultar?facturaId=` | Detalle de factura con servicios, medicamentos, pagos y trazabilidad |
+| GET | `/factura/preliquidar?citaId=` | Preliquidación de cita atendida con servicios y medicamentos dispensados |
+| GET | `/factura/historial-cliente?clienteId=` | Historial de facturación de un propietario |
+| GET | `/factura/historial-mascota?mascotaId=` | Historial de facturación de una mascota |
+| POST | `/factura/guardar` | Emitir factura congelando precios históricos y calculando impuestos/descuentos |
+| POST | `/factura/{facturaId}/pagos` | Registrar pago total o abono parcial asociado a factura |
+| PATCH | `/factura/{facturaId}/anular?motivo=` | Anular factura conservando su historial y trazabilidad |
+| GET | `/reporte/financiero` | Reporte financiero (ingresos por período, consulta, especialidad, veterinario, medicamentos, impuestos, descuentos, estados y resumen día/mes/año) |
+| GET | `/reporte/inventario` | Reporte de inventario (existencias, costo adquisición vs venta potencial, agotados, stock mínimo, próximos a vencer, vencidos y Kardex) |
+| GET | `/reporte/gestion-medica` | Reporte de gestión médica (citas por período y estado, consultas por veterinario y especialidad, mascotas atendidas) |
 
 Respuestas de éxito: `{ "status": 201|200, "message": "..." }`.
 Respuestas de error: `{ "status": ..., "error": "...", "message": "..." }`.

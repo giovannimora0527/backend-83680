@@ -30,6 +30,9 @@ public interface MedicamentoService {
     /** Registra una salida del inventario y genera el movimiento asociado. */
     MiRespuestaRS registrarSalidaInventario(Long medicamentoId, Integer cantidad, String motivo, Long referenciaId, String referenciaTipo) throws BadRequestException;
 
+    /** Registra una salida del inventario indicando el usuario responsable de la operación. */
+    MiRespuestaRS registrarSalidaInventario(Long medicamentoId, Integer cantidad, String motivo, Long referenciaId, String referenciaTipo, String usuarioRegistro) throws BadRequestException;
+
     /** Consulta el historial de movimientos del medicamento. */
     List<MovimientoMedicamento> consultarHistorialInventario(Long medicamentoId) throws BadRequestException;
 }

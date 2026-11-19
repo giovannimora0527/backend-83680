@@ -33,6 +33,24 @@ public interface FormulaMedicaApi {
     ResponseEntity<List<FormulaMedica>> listarFormulasMedicas();
 
     /**
+     * Lista las fórmulas médicas asociadas a una cita o atención médica específica.
+     *
+     * @param citaId identificador de la cita.
+     * @return fórmulas de la cita.
+     */
+    @GetMapping(value = "/listar-by-cita", produces = "application/json")
+    ResponseEntity<List<FormulaMedica>> listarFormulasPorCita(@RequestParam Long citaId);
+
+    /**
+     * Lista las fórmulas médicas asociadas a una mascota.
+     *
+     * @param mascotaId identificador de la mascota.
+     * @return fórmulas de la mascota.
+     */
+    @GetMapping(value = "/listar-by-mascota", produces = "application/json")
+    ResponseEntity<List<FormulaMedica>> listarFormulasPorMascota(@RequestParam Integer mascotaId);
+
+    /**
      * Consulta el detalle completo de una fórmula médica.
      *
      * @param formulaId identificador de la fórmula.
@@ -58,11 +76,13 @@ public interface FormulaMedicaApi {
      */
     @PatchMapping(value = "/inactivar", produces = "application/json")
     ResponseEntity<MiRespuestaRS> inactivarFormulaMedica(@RequestParam Long formulaId);
-    // Registra la dispensación real del medicamento asociado a una fórmula.
+
+    // Registra la dispensación real del medicamento asociado a una fórmula y descuenta del inventario.
     @PostMapping(value = "/{formulaId}/dispensar", produces = "application/json")
     ResponseEntity<MiRespuestaRS> dispensarFormula(@PathVariable Long formulaId,
-                                                @RequestParam Integer cantidad,
-                                                @RequestParam(required = false) String observacion);
+                                                   @RequestParam Integer cantidad,
+                                                   @RequestParam(required = false) String observacion,
+                                                   @RequestParam(required = false) String usuario);
 
     // Consulta el historial de movimientos de inventario asociados a una fórmula.
     @GetMapping(value = "/{formulaId}/historial", produces = "application/json")

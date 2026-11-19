@@ -40,8 +40,12 @@ public class Cita {
     private Medico medico;
 
     @Column(name = "fecha_hora", nullable = false)
-    /** Fecha y hora programada. */
+    /** Fecha y hora de inicio programada. */
     private LocalDateTime fechaHora;
+
+    @Column(name = "fecha_hora_fin")
+    /** Fecha y hora estimada de finalización de la cita. */
+    private LocalDateTime fechaHoraFin;
 
     @Column(name = "estado", nullable = false, length = 20)
     /** Estado actual de la cita. */
@@ -51,10 +55,12 @@ public class Cita {
     /** Motivo de la consulta. */
     private String motivo;
 
+    @Column(name = "fecha_actualizacion")
+    /** Fecha y hora de la última modificación de la cita. */
+    private LocalDateTime fechaActualizacion;
+
+    @Column(name = "historial_cambios", columnDefinition = "TEXT")
+    /** Registro cronológico de cambios de estado y reprogramaciones. */
+    private String historialCambios;
+
 }
-    /** Cliente que solicita la cita. */
-    /** Mascota atendida en la cita. */
-    /** Médico encargado de la atención. */
-    /** Fecha y hora programada. */
-    /** Estado actual de la cita. */
-    /** Motivo de la consulta. */

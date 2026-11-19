@@ -45,6 +45,10 @@ public class MovimientoMedicamento {
     /** Identificador de la referencia asociada. */
     private Long referenciaId;
 
+    @Column(name = "usuario_registro", length = 100)
+    /** Usuario o perfil responsable que registró el movimiento. */
+    private String usuarioRegistro;
+
     @Column(name = "fecha_registro", nullable = false)
     /** Fecha en que se registró el movimiento. */
     private LocalDateTime fechaRegistro;

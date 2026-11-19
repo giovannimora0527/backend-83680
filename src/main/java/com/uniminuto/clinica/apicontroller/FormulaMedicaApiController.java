@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 @RestController
-/** Controlador que expone las fórmulas médicas. */
+/** Controlador que expone las fórmulas médicas y su dispensación. */
 public class FormulaMedicaApiController implements FormulaMedicaApi {
 
     @Autowired
@@ -31,6 +31,18 @@ public class FormulaMedicaApiController implements FormulaMedicaApi {
     /** Delega la consulta de fórmulas médicas. */
     public ResponseEntity<List<FormulaMedica>> listarFormulasMedicas() {
         return ResponseEntity.ok(formulaMedicaService.listarFormulasMedicas());
+    }
+
+    @Override
+    /** Delega la consulta de fórmulas médicas asociadas a una cita. */
+    public ResponseEntity<List<FormulaMedica>> listarFormulasPorCita(Long citaId) {
+        return ResponseEntity.ok(formulaMedicaService.listarFormulasPorCita(citaId));
+    }
+
+    @Override
+    /** Delega la consulta de fórmulas médicas asociadas a una mascota. */
+    public ResponseEntity<List<FormulaMedica>> listarFormulasPorMascota(Integer mascotaId) {
+        return ResponseEntity.ok(formulaMedicaService.listarFormulasPorMascota(mascotaId));
     }
 
     @Override
@@ -53,8 +65,9 @@ public class FormulaMedicaApiController implements FormulaMedicaApi {
 
     @Override
     /** Delega la dispensación real del medicamento asociado a la fórmula. */
-    public ResponseEntity<MiRespuestaRS> dispensarFormula(Long formulaId, Integer cantidad, String observacion) {
-        return ResponseEntity.ok(formulaMedicaService.dispensarFormula(formulaId, cantidad, observacion));
+    public ResponseEntity<MiRespuestaRS> dispensarFormula(Long formulaId, Integer cantidad,
+                                                          String observacion, String usuario) {
+        return ResponseEntity.ok(formulaMedicaService.dispensarFormula(formulaId, cantidad, observacion, usuario));
     }
 
     @Override

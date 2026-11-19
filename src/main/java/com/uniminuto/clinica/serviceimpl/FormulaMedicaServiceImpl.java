@@ -25,11 +25,12 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
-/** Implementa las operaciones de fórmulas médicas. */
+/** Implementa las operaciones de fórmulas médicas diferenciando la formulación de la dispensación. */
 public class FormulaMedicaServiceImpl implements FormulaMedicaService {
 
     @Autowired
@@ -53,6 +54,25 @@ public class FormulaMedicaServiceImpl implements FormulaMedicaService {
     @Autowired
     private MedicamentoService medicamentoService;
 
+    public FormulaMedicaServiceImpl() {
+    }
+
+    public FormulaMedicaServiceImpl(FormulaMedicaRepository formulaMedicaRepository,
+                                    MascotaRepository mascotaRepository,
+                                    CitaRepository citaRepository,
+                                    MedicoRepository medicoRepository,
+                                    MedicamentoRepository medicamentoRepository,
+                                    MovimientoMedicamentoRepository movimientoMedicamentoRepository,
+                                    MedicamentoService medicamentoService) {
+        this.formulaMedicaRepository = formulaMedicaRepository;
+        this.mascotaRepository = mascotaRepository;
+        this.citaRepository = citaRepository;
+        this.medicoRepository = medicoRepository;
+        this.medicamentoRepository = medicamentoRepository;
+        this.movimientoMedicamentoRepository = movimientoMedicamentoRepository;
+        this.medicamentoService = medicamentoService;
+    }
+
     @Override
     @Transactional
     public MiRespuestaRS crearFormulaMedica(FormulaMedicaRq formulaRq) {
@@ -64,7 +84,7 @@ public class FormulaMedicaServiceImpl implements FormulaMedicaService {
         Mascota mascota = mascotaRepository.findById(formulaRq.getMascotaId())
                 .orElseThrow(() -> new NotFoundException("Mascota no encontrada"));
         if (mascota.getCliente() == null || !Boolean.TRUE.equals(mascota.getCliente().getActivo())) {
-            throw new BadRequestException("La mascota no pertenece a un cliente registrado");
+            throw new BadRequestException("La mascota no pertenece a un cliente registrado y activo");
         }
 
         Cita cita = citaRepository.findById(formulaRq.getCitaId())
@@ -76,30 +96,59 @@ public class FormulaMedicaServiceImpl implements FormulaMedicaService {
             throw new BadRequestException("No se puede generar una fórmula para una cita cancelada");
         }
 
-        if (formulaMedicaRepository.existsByCita_IdAndMedicamento_Id(
+        if (formulaMedicaRepository.existsByCita_IdAndMedicamento_IdAndActivoTrue(
                 formulaRq.getCitaId(), formulaRq.getMedicamentoId())) {
-            throw new ConflictException("El medicamento ya está formulado para esta cita");
+            throw new ConflictException("El medicamento ya está formulado activamente para esta cita");
         }
 
         FormulaMedica formula = new FormulaMedica();
         formula.setMascota(mascota);
         formula.setCita(cita);
         asignarDatos(formula, formulaRq);
-        if (formula.getMedicamento().getCantidadDisponible() < formula.getCantidadSolicitada()) {
-            throw new BadRequestException("Inventario insuficiente para la cantidad formulada");
+
+        // En la formulación se valida existencia suficiente en inventario, pero NO se descuenta stock.
+        int disponible = formula.getMedicamento().getCantidadDisponible() != null
+                ? formula.getMedicamento().getCantidadDisponible() : 0;
+        if (disponible < formula.getCantidadSolicitada()) {
+            throw new BadRequestException("Inventario insuficiente para formular " + formula.getCantidadSolicitada()
+                    + " unidad(es) de " + formula.getMedicamento().getNombre()
+                    + " (disponible en inventario: " + disponible + ")");
         }
+
         formula.setCantidadEntregada(0);
-        formula.setEstado("FORMULADA");
+        formula.setEstado(Constantes.FORMULA_FORMULADA);
         formula.setActivo(true);
         formula.setFechaCreacionRegistro(LocalDateTime.now());
         formulaMedicaRepository.save(formula);
 
-        return respuesta(HttpStatus.CREATED.value(), "Fórmula médica creada correctamente");
+        return respuesta(HttpStatus.CREATED.value(), "Fórmula médica creada correctamente (pendiente de dispensación)");
     }
 
     @Override
     public List<FormulaMedica> listarFormulasMedicas() {
         return formulaMedicaRepository.findAllByOrderByFechaCreacionRegistroDesc();
+    }
+
+    @Override
+    public List<FormulaMedica> listarFormulasPorCita(Long citaId) {
+        if (citaId == null) {
+            throw new BadRequestException("El ID de la cita es obligatorio");
+        }
+        if (!citaRepository.existsById(citaId)) {
+            throw new NotFoundException("Cita no encontrada");
+        }
+        return formulaMedicaRepository.findByCita_IdOrderByFechaCreacionRegistroDesc(citaId);
+    }
+
+    @Override
+    public List<FormulaMedica> listarFormulasPorMascota(Integer mascotaId) {
+        if (mascotaId == null) {
+            throw new BadRequestException("El ID de la mascota es obligatorio");
+        }
+        if (!mascotaRepository.existsById(mascotaId)) {
+            throw new NotFoundException("Mascota no encontrada");
+        }
+        return formulaMedicaRepository.findByMascota_MascotaIdOrderByFechaCreacionRegistroDesc(mascotaId);
     }
 
     @Override
@@ -122,19 +171,39 @@ public class FormulaMedicaServiceImpl implements FormulaMedicaService {
         if (!Boolean.TRUE.equals(formula.getActivo())) {
             throw new ConflictException("La fórmula está inactiva y ya no se puede modificar");
         }
-        if (formulaMedicaRepository.existsByCita_IdAndMedicamento_IdAndIdNot(
+        if (Constantes.FORMULA_ENTREGADA.equalsIgnoreCase(formula.getEstado())) {
+            throw new ConflictException("La fórmula ya fue dispensada en su totalidad y no se puede modificar");
+        }
+        if (formulaMedicaRepository.existsByCita_IdAndMedicamento_IdAndActivoTrueAndIdNot(
                 formula.getCita().getId(), formulaRq.getMedicamentoId(), formula.getId())) {
             throw new ConflictException("El medicamento ya está formulado para esta cita");
         }
 
+        int entregadaActual = formula.getCantidadEntregada() != null ? formula.getCantidadEntregada() : 0;
+        if (entregadaActual > 0 && !formula.getMedicamento().getId().equals(formulaRq.getMedicamentoId())) {
+            throw new ConflictException("No se puede cambiar el medicamento de una fórmula que ya tiene entregas parciales");
+        }
+
         asignarDatos(formula, formulaRq);
-        if (formula.getCantidadSolicitada() < formula.getCantidadEntregada()) {
-            throw new BadRequestException("La cantidad solicitada no puede ser menor a la ya dispensada");
+        if (formula.getCantidadSolicitada() < entregadaActual) {
+            throw new BadRequestException("La cantidad solicitada no puede ser menor a la ya dispensada (" + entregadaActual + ")");
         }
-        int cantidadPendiente = formula.getCantidadSolicitada() - formula.getCantidadEntregada();
-        if (formula.getMedicamento().getCantidadDisponible() < cantidadPendiente) {
-            throw new BadRequestException("Inventario insuficiente para la cantidad formulada");
+        int cantidadPendiente = formula.getCantidadSolicitada() - entregadaActual;
+        int disponible = formula.getMedicamento().getCantidadDisponible() != null
+                ? formula.getMedicamento().getCantidadDisponible() : 0;
+        if (disponible < cantidadPendiente) {
+            throw new BadRequestException("Inventario insuficiente para la cantidad pendiente por dispensar ("
+                    + cantidadPendiente + " unidad(es), disponible: " + disponible + ")");
         }
+
+        if (entregadaActual > 0) {
+            formula.setEstado(formula.getCantidadSolicitada().equals(entregadaActual)
+                    ? Constantes.FORMULA_ENTREGADA
+                    : Constantes.FORMULA_PARCIAL);
+        } else {
+            formula.setEstado(Constantes.FORMULA_FORMULADA);
+        }
+
         formula.setFechaActualizacionRegistro(LocalDateTime.now());
         formulaMedicaRepository.save(formula);
 
@@ -151,8 +220,12 @@ public class FormulaMedicaServiceImpl implements FormulaMedicaService {
         if (!Boolean.TRUE.equals(formula.getActivo())) {
             throw new ConflictException("La fórmula ya se encuentra inactiva");
         }
+        if (formula.getCantidadEntregada() != null && formula.getCantidadEntregada() > 0) {
+            throw new ConflictException("No se puede inactivar una fórmula que ya tiene medicamentos dispensados");
+        }
 
         formula.setActivo(false);
+        formula.setEstado(Constantes.FORMULA_CANCELADA);
         formula.setFechaActualizacionRegistro(LocalDateTime.now());
         formulaMedicaRepository.save(formula);
 
@@ -162,6 +235,12 @@ public class FormulaMedicaServiceImpl implements FormulaMedicaService {
     @Override
     @Transactional
     public MiRespuestaRS dispensarFormula(Long formulaId, Integer cantidad, String observacion) {
+        return dispensarFormula(formulaId, cantidad, observacion, null);
+    }
+
+    @Override
+    @Transactional
+    public MiRespuestaRS dispensarFormula(Long formulaId, Integer cantidad, String observacion, String usuario) {
         if (formulaId == null || formulaId <= 0) {
             throw new BadRequestException("El identificador de la fórmula es obligatorio");
         }
@@ -174,31 +253,46 @@ public class FormulaMedicaServiceImpl implements FormulaMedicaService {
             throw new ConflictException("No se puede dispensar una fórmula inactiva");
         }
 
-        int restante = formula.getCantidadSolicitada() - formula.getCantidadEntregada();
+        int entregadaActual = formula.getCantidadEntregada() != null ? formula.getCantidadEntregada() : 0;
+        int restante = formula.getCantidadSolicitada() - entregadaActual;
+        if (restante <= 0) {
+            throw new ConflictException("La fórmula ya fue dispensada en su totalidad");
+        }
         if (cantidad > restante) {
-            throw new BadRequestException("La cantidad a dispensar supera el saldo pendiente de la fórmula");
+            throw new BadRequestException("La cantidad a dispensar (" + cantidad
+                    + ") supera el saldo pendiente de la fórmula (" + restante + ")");
         }
 
         Medicamento medicamento = formula.getMedicamento();
         if (medicamento.getCantidadDisponible() < cantidad) {
-            throw new BadRequestException("Inventario insuficiente para la dispensación solicitada");
+            throw new BadRequestException("Inventario insuficiente para la dispensación solicitada (disponible: "
+                    + medicamento.getCantidadDisponible() + ")");
         }
 
         String motivo = observacion == null || observacion.isBlank()
-                ? "DISPENSACION"
-                : "DISPENSACION: " + observacion.trim();
-        medicamentoService.registrarSalidaInventario(
-                medicamento.getId(), cantidad, motivo, formula.getId(), "FORMULA");
+                ? "DISPENSACION FORMULA #" + formula.getId()
+                : "DISPENSACION FORMULA #" + formula.getId() + ": " + observacion.trim();
+        String usuarioResponsable = (usuario != null && !usuario.isBlank())
+                ? usuario.trim()
+                : (formula.getMedico() != null
+                ? "Dr(a). " + formula.getMedico().getNombres() + " " + formula.getMedico().getApellidos()
+                : "DESPACHO");
 
-        formula.setCantidadEntregada(formula.getCantidadEntregada() + cantidad);
+        // Al confirmar la dispensación se descuenta del inventario y se registra el movimiento de salida.
+        medicamentoService.registrarSalidaInventario(
+                medicamento.getId(), cantidad, motivo, formula.getId(), "FORMULA", usuarioResponsable);
+
+        int nuevaEntregada = entregadaActual + cantidad;
+        formula.setCantidadEntregada(nuevaEntregada);
         formula.setFechaDispenacion(LocalDateTime.now());
         formula.setFechaActualizacionRegistro(LocalDateTime.now());
-        formula.setEstado(formula.getCantidadEntregada() >= formula.getCantidadSolicitada()
-                ? "ENTREGADA"
-                : "PARCIAL");
+        formula.setEstado(nuevaEntregada >= formula.getCantidadSolicitada()
+                ? Constantes.FORMULA_ENTREGADA
+                : Constantes.FORMULA_PARCIAL);
         formulaMedicaRepository.save(formula);
 
-        return respuesta(HttpStatus.OK.value(), "Dispensación registrada correctamente");
+        return respuesta(HttpStatus.OK.value(),
+                "Dispensación registrada correctamente (" + nuevaEntregada + "/" + formula.getCantidadSolicitada() + " unidades entregadas)");
     }
 
     @Override
@@ -218,6 +312,12 @@ public class FormulaMedicaServiceImpl implements FormulaMedicaService {
         Medicamento medicamento = medicamentoRepository.findById(formulaRq.getMedicamentoId())
                 .orElseThrow(() -> new NotFoundException("Medicamento no encontrado"));
 
+        if (!Boolean.TRUE.equals(medicamento.getActivo())) {
+            throw new BadRequestException("El medicamento seleccionado se encuentra inactivo en el inventario");
+        }
+        if (medicamento.getFechaVence() != null && medicamento.getFechaVence().isBefore(LocalDate.now())) {
+            throw new BadRequestException("El medicamento seleccionado está vencido (" + medicamento.getFechaVence() + ") y no puede formularse");
+        }
         if (formulaRq.getFechaEmision().isBefore(formula.getCita().getFechaHora().toLocalDate())) {
             throw new BadRequestException("La fecha de emisión no puede ser anterior a la fecha de la consulta");
         }
@@ -246,7 +346,7 @@ public class FormulaMedicaServiceImpl implements FormulaMedicaService {
                 || formulaRq.getDuracionDias() == null
                 || formulaRq.getIndicaciones() == null || formulaRq.getIndicaciones().isBlank()) {
             throw new BadRequestException(
-                    "Veterinario, medicamento, fecha, cantidad, dosis, frecuencia, duración e indicaciones son obligatorios");
+                    "Veterinario, medicamento, fecha, cantidad solicitada, dosis, frecuencia, duración e indicaciones son obligatorios");
         }
 
         if (!formulaRq.getDosis().matches(".*\\d.*") || formulaRq.getDosis().trim().length() > 100) {

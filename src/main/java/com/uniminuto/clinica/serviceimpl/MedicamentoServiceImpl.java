@@ -29,7 +29,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
-import java.util.Objects;
 import java.util.regex.Pattern;
 
 @Service
@@ -78,14 +77,22 @@ public class MedicamentoServiceImpl implements MedicamentoService {
         medicamento.setNombre(nombre);
         medicamento.setCodigo(codigo);
         medicamento.setDescripcion(medicamento.getDescripcion() == null ? null : medicamento.getDescripcion().trim());
-        medicamento.setPresentacion(medicamento.getPresentacion() == null ? null : medicamento.getPresentacion().trim());
+        medicamento
+                .setPresentacion(medicamento.getPresentacion() == null ? null : medicamento.getPresentacion().trim());
         medicamento.setLote(medicamento.getLote() == null ? null : medicamento.getLote().trim());
-        medicamento.setRegistroInvima(medicamento.getRegistroInvima() == null ? null : medicamento.getRegistroInvima().trim());
+        medicamento.setRegistroInvima(
+                medicamento.getRegistroInvima() == null ? null : medicamento.getRegistroInvima().trim());
         medicamento.setActivo(medicamento.getActivo() == null || medicamento.getActivo());
         medicamento.setFechaCreacionRegistro(LocalDateTime.now());
         medicamento.setFechaModificacionRegistro(LocalDateTime.now());
 
-        medicamentoRepository.save(medicamento);
+        Medicamento guardado = medicamentoRepository.save(medicamento);
+        if (guardado.getCantidadDisponible() != null && guardado.getCantidadDisponible() > 0) {
+            registrarMovimientoEntrada(guardado.getId(), guardado.getCantidadDisponible(),
+                    "INGRESO INICIAL INVENTARIO (Lote: " + (guardado.getLote() != null ? guardado.getLote() : "N/A")
+                            + ")",
+                    "INGRESO_INICIAL", guardado.getId());
+        }
         return respuesta("Medicamento registrado correctamente");
     }
 
@@ -95,7 +102,8 @@ public class MedicamentoServiceImpl implements MedicamentoService {
             throw new BadRequestException("Debe seleccionar un archivo para realizar la carga masiva");
         }
 
-        String nombreArchivo = archivo.getOriginalFilename() == null ? "" : archivo.getOriginalFilename().toLowerCase(Locale.ROOT);
+        String nombreArchivo = archivo.getOriginalFilename() == null ? ""
+                : archivo.getOriginalFilename().toLowerCase(Locale.ROOT);
         List<String[]> filas;
 
         try {
@@ -116,16 +124,17 @@ public class MedicamentoServiceImpl implements MedicamentoService {
 
         List<String> encabezadosEsperados = Arrays.asList(
                 "nombre", "descripcion", "presentacion", "codigo", "lote",
-                "registroInvima", "requiereRegistroInvima", "precioCompra","precioVenta",
+                "registroInvima", "requiereRegistroInvima", "precioCompra", "precioVenta",
                 "cantidadDisponible", "stockMinimo", "fechaCompra", "fechaIngresoInventario",
-                "fechaVence", "fechaProximoPedido", "activo"
-        );
+                "fechaVence", "fechaProximoPedido", "activo");
 
         String[] encabezados = filas.getFirst();
         for (int i = 0; i < encabezadosEsperados.size(); i++) {
             String esperado = encabezadosEsperados.get(i);
-            if (i >= encabezados.length || encabezados[i] == null || !encabezados[i].trim().equalsIgnoreCase(esperado)) {
-                throw new BadRequestException("La estructura del archivo es inválida. Encabezados esperados: " + encabezadosEsperados);
+            if (i >= encabezados.length || encabezados[i] == null
+                    || !encabezados[i].trim().equalsIgnoreCase(esperado)) {
+                throw new BadRequestException(
+                        "La estructura del archivo es inválida. Encabezados esperados: " + encabezadosEsperados);
             }
         }
 
@@ -136,7 +145,8 @@ public class MedicamentoServiceImpl implements MedicamentoService {
             String[] fila = filas.get(i);
             resultado.setTotalRegistros(resultado.getTotalRegistros() + 1);
 
-            if (fila == null || fila.length == 0 || Arrays.stream(fila).allMatch(value -> value == null || value.trim().isEmpty())) {
+            if (fila == null || fila.length == 0
+                    || Arrays.stream(fila).allMatch(value -> value == null || value.trim().isEmpty())) {
                 continue;
             }
 
@@ -168,6 +178,12 @@ public class MedicamentoServiceImpl implements MedicamentoService {
         }
 
         List<Medicamento> importados = medicamentoRepository.saveAll(validos);
+        for (Medicamento imp : importados) {
+            if (imp.getCantidadDisponible() != null && imp.getCantidadDisponible() > 0) {
+                registrarMovimientoEntrada(imp.getId(), imp.getCantidadDisponible(),
+                        "CARGA MASIVA INVENTARIO", "CARGA_MASIVA", imp.getId());
+            }
+        }
         resultado.setImportados(importados);
         return resultado;
     }
@@ -196,12 +212,20 @@ public class MedicamentoServiceImpl implements MedicamentoService {
             throw new BadRequestException("Ya existe un medicamento registrado con ese código");
         }
 
+        int stockAnterior = medicamentoActual.getCantidadDisponible() != null
+                ? medicamentoActual.getCantidadDisponible()
+                : 0;
+        int stockNuevo = medicamento.getCantidadDisponible() != null ? medicamento.getCantidadDisponible() : 0;
+
         medicamentoActual.setNombre(nombre);
-        medicamentoActual.setDescripcion(medicamento.getDescripcion() == null ? null : medicamento.getDescripcion().trim());
-        medicamentoActual.setPresentacion(medicamento.getPresentacion() == null ? null : medicamento.getPresentacion().trim());
+        medicamentoActual
+                .setDescripcion(medicamento.getDescripcion() == null ? null : medicamento.getDescripcion().trim());
+        medicamentoActual
+                .setPresentacion(medicamento.getPresentacion() == null ? null : medicamento.getPresentacion().trim());
         medicamentoActual.setCodigo(codigo);
         medicamentoActual.setLote(medicamento.getLote() == null ? null : medicamento.getLote().trim());
-        medicamentoActual.setRegistroInvima(medicamento.getRegistroInvima() == null ? null : medicamento.getRegistroInvima().trim());
+        medicamentoActual.setRegistroInvima(
+                medicamento.getRegistroInvima() == null ? null : medicamento.getRegistroInvima().trim());
         medicamentoActual.setRequiereRegistroInvima(Boolean.TRUE.equals(medicamento.getRequiereRegistroInvima()));
         medicamentoActual.setPrecioCompra(medicamento.getPrecioCompra());
         medicamentoActual.setPrecioVenta(medicamento.getPrecioVenta());
@@ -215,13 +239,52 @@ public class MedicamentoServiceImpl implements MedicamentoService {
         medicamentoActual.setFechaModificacionRegistro(LocalDateTime.now());
 
         medicamentoRepository.save(medicamentoActual);
+        if (stockNuevo > stockAnterior) {
+            registrarMovimientoEntrada(medicamentoActual.getId(), stockNuevo - stockAnterior,
+                    "AJUSTE DE ENTRADA / REABASTECIMIENTO", "AJUSTE_INVENTARIO", medicamentoActual.getId());
+        } else if (stockNuevo < stockAnterior) {
+            MovimientoMedicamento movSalida = new MovimientoMedicamento();
+            movSalida.setMedicamentoId(medicamentoActual.getId());
+            movSalida.setTipo("SALIDA");
+            movSalida.setCantidad(stockAnterior - stockNuevo);
+            movSalida.setMotivo("AJUSTE DE SALIDA DE INVENTARIO");
+            movSalida.setReferenciaTipo("AJUSTE_INVENTARIO");
+            movSalida.setReferenciaId(medicamentoActual.getId());
+            movSalida.setUsuarioRegistro("INVENTARIO");
+            movSalida.setFechaRegistro(LocalDateTime.now());
+            movimientoMedicamentoRepository.save(movSalida);
+        }
         return respuesta("Medicamento actualizado correctamente");
+    }
+
+    private void registrarMovimientoEntrada(Long medicamentoId, Integer cantidad, String motivo,
+            String referenciaTipo, Long referenciaId) {
+        if (movimientoMedicamentoRepository == null || medicamentoId == null || cantidad == null || cantidad <= 0) {
+            return;
+        }
+        MovimientoMedicamento mov = new MovimientoMedicamento();
+        mov.setMedicamentoId(medicamentoId);
+        mov.setTipo("ENTRADA");
+        mov.setCantidad(cantidad);
+        mov.setMotivo(motivo);
+        mov.setReferenciaTipo(referenciaTipo);
+        mov.setReferenciaId(referenciaId);
+        mov.setUsuarioRegistro("INVENTARIO");
+        mov.setFechaRegistro(LocalDateTime.now());
+        movimientoMedicamentoRepository.save(mov);
     }
 
     @Override
     @Transactional
     public MiRespuestaRS registrarSalidaInventario(Long medicamentoId, Integer cantidad, String motivo,
-                                                Long referenciaId, String referenciaTipo) throws BadRequestException {
+            Long referenciaId, String referenciaTipo) throws BadRequestException {
+        return registrarSalidaInventario(medicamentoId, cantidad, motivo, referenciaId, referenciaTipo, null);
+    }
+
+    @Override
+    @Transactional
+    public MiRespuestaRS registrarSalidaInventario(Long medicamentoId, Integer cantidad, String motivo,
+            Long referenciaId, String referenciaTipo, String usuarioRegistro) throws BadRequestException {
         if (medicamentoId == null || medicamentoId <= 0) {
             throw new BadRequestException("El identificador del medicamento es obligatorio");
         }
@@ -232,6 +295,13 @@ public class MedicamentoServiceImpl implements MedicamentoService {
         Medicamento medicamento = medicamentoRepository.findById(medicamentoId)
                 .orElseThrow(() -> new BadRequestException("Medicamento no encontrado"));
 
+        if (!Boolean.TRUE.equals(medicamento.getActivo())) {
+            throw new BadRequestException("No se puede dispensar un medicamento inactivo");
+        }
+        if (medicamento.getFechaVence() != null && medicamento.getFechaVence().isBefore(LocalDate.now())) {
+            throw new BadRequestException(
+                    "No se puede dispensar un medicamento vencido (venció el " + medicamento.getFechaVence() + ")");
+        }
         if (medicamento.getCantidadDisponible() < cantidad) {
             throw new BadRequestException("No hay suficiente inventario para despachar " + cantidad + " unidades");
         }
@@ -246,7 +316,10 @@ public class MedicamentoServiceImpl implements MedicamentoService {
         movimiento.setCantidad(cantidad);
         movimiento.setMotivo(motivo == null || motivo.isBlank() ? "DESPACHO" : motivo.trim());
         movimiento.setReferenciaId(referenciaId);
-        movimiento.setReferenciaTipo(referenciaTipo == null || referenciaTipo.isBlank() ? "AJUSTE" : referenciaTipo.trim());
+        movimiento.setReferenciaTipo(
+                referenciaTipo == null || referenciaTipo.isBlank() ? "AJUSTE" : referenciaTipo.trim());
+        movimiento.setUsuarioRegistro(
+                usuarioRegistro == null || usuarioRegistro.isBlank() ? "SISTEMA" : usuarioRegistro.trim());
         movimiento.setFechaRegistro(LocalDateTime.now());
         movimientoMedicamentoRepository.save(movimiento);
 
@@ -383,7 +456,8 @@ public class MedicamentoServiceImpl implements MedicamentoService {
             return false;
         }
         String normalizado = texto.trim().toLowerCase(Locale.ROOT);
-        if ("true".equals(normalizado) || "1".equals(normalizado) || "si".equals(normalizado) || "yes".equals(normalizado)) {
+        if ("true".equals(normalizado) || "1".equals(normalizado) || "si".equals(normalizado)
+                || "yes".equals(normalizado)) {
             return true;
         }
         if ("false".equals(normalizado) || "0".equals(normalizado) || "no".equals(normalizado)) {

@@ -8,6 +8,7 @@ import com.uniminuto.clinica.entity.Medico;
 import com.uniminuto.clinica.exception.BadRequestException;
 import com.uniminuto.clinica.exception.ConflictException;
 import com.uniminuto.clinica.exception.NotFoundException;
+import com.uniminuto.clinica.models.FormulaMedicaRq;
 import com.uniminuto.clinica.models.HistoriaMedicaRq;
 import com.uniminuto.clinica.models.MiRespuestaRS;
 import com.uniminuto.clinica.repository.AnotacionHistoriaRepository;
@@ -16,18 +17,23 @@ import com.uniminuto.clinica.repository.ClienteRepository;
 import com.uniminuto.clinica.repository.HistoriaMedicaRepository;
 import com.uniminuto.clinica.repository.MascotaRepository;
 import com.uniminuto.clinica.repository.MedicoRepository;
+import com.uniminuto.clinica.service.FormulaMedicaService;
 import com.uniminuto.clinica.service.HistoriaMedicaService;
 import com.uniminuto.clinica.utils.Constantes;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 @Service
-/** Implementa las operaciones de historias médicas. */
+/** Implementa las operaciones de atención médica (historias clínicas) y su integración con fórmulas médicas. */
 public class HistoriaMedicaServiceImpl implements HistoriaMedicaService {
+
+    private static final DateTimeFormatter FORMATO_FECHA_HORA = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
 
     @Autowired
     /** Repositorio de historias médicas. */
@@ -53,6 +59,10 @@ public class HistoriaMedicaServiceImpl implements HistoriaMedicaService {
     /** Repositorio de médicos. */
     private MedicoRepository medicoRepository;
 
+    @Autowired
+    /** Servicio de fórmulas médicas para prescribir durante la atención. */
+    private FormulaMedicaService formulaMedicaService;
+
     @Override
     // Devuelve las historias médicas ordenadas de la consulta más reciente a la más antigua.
     public List<HistoriaMedica> listarHistoriasMedicas() throws BadRequestException {
@@ -69,7 +79,8 @@ public class HistoriaMedicaServiceImpl implements HistoriaMedicaService {
     }
 
     @Override
-    // Valida las relaciones cliente - mascota - cita y crea la historia de la consulta.
+    @Transactional
+    // Registra la atención médica de la cita, actualiza el estado de la cita a ATENDIDA y crea las fórmulas prescritas.
     public MiRespuestaRS crearHistoriaMedica(HistoriaMedicaRq historiaMedicaRq) throws BadRequestException {
         validarHistoriaMedica(historiaMedicaRq);
 
@@ -86,18 +97,32 @@ public class HistoriaMedicaServiceImpl implements HistoriaMedicaService {
         if (!cita.getMascota().getMascotaId().equals(mascota.getMascotaId())) {
             throw new BadRequestException("La cita seleccionada pertenece a otra mascota");
         }
-        if (!Constantes.CITA_ATENDIDA.equalsIgnoreCase(cita.getEstado())) {
-            throw new BadRequestException("Solo se puede registrar la historia clínica de una cita atendida");
+        if (Constantes.CITA_CANCELADA.equalsIgnoreCase(cita.getEstado())) {
+            throw new BadRequestException("No se puede registrar atención médica para una cita cancelada");
         }
         if (historiaMedicaRepository.existsByCita_Id(cita.getId())) {
-            throw new ConflictException("La cita ya tiene una historia clínica registrada");
+            throw new ConflictException("La cita ya tiene una atención / historia clínica registrada");
         }
         if (historiaMedicaRq.getFechaHora().isBefore(cita.getFechaHora())) {
-            throw new BadRequestException("La fecha de la consulta no puede ser anterior a la fecha de la cita");
+            throw new BadRequestException("La fecha de la atención médica no puede ser anterior a la fecha de la cita");
         }
 
         Medico medico = medicoRepository.findById(historiaMedicaRq.getMedicoId())
                 .orElseThrow(() -> new NotFoundException("Veterinario no encontrado"));
+
+        // Si la cita estaba Pendiente, Programada o Confirmada, pasa automáticamente a ATENDIDA al registrar la atención.
+        if (!Constantes.CITA_ATENDIDA.equalsIgnoreCase(cita.getEstado())) {
+            String estadoPrevio = cita.getEstado();
+            cita.setEstado(Constantes.CITA_ATENDIDA);
+            cita.setFechaActualizacion(LocalDateTime.now());
+            String linea = "[" + LocalDateTime.now().format(FORMATO_FECHA_HORA)
+                    + "] Atención médica registrada por Dr(a). " + medico.getNombres() + " " + medico.getApellidos()
+                    + " (Estado: " + estadoPrevio + " -> ATENDIDA)";
+            cita.setHistorialCambios(cita.getHistorialCambios() == null || cita.getHistorialCambios().isBlank()
+                    ? linea
+                    : cita.getHistorialCambios() + "\n" + linea);
+            citaRepository.save(cita);
+        }
 
         HistoriaMedica historiaMedica = new HistoriaMedica();
         historiaMedica.setCliente(cliente);
@@ -112,7 +137,29 @@ public class HistoriaMedicaServiceImpl implements HistoriaMedicaService {
         historiaMedica.setFechaCreacion(LocalDateTime.now());
         historiaMedicaRepository.save(historiaMedica);
 
-        return respuesta(HttpStatus.CREATED.value(), "Historia médica creada correctamente");
+        int formulasCreadas = 0;
+        if (historiaMedicaRq.getFormulas() != null && !historiaMedicaRq.getFormulas().isEmpty()) {
+            for (FormulaMedicaRq formulaRq : historiaMedicaRq.getFormulas()) {
+                if (formulaRq == null || formulaRq.getMedicamentoId() == null) {
+                    continue;
+                }
+                formulaRq.setCitaId(cita.getId());
+                formulaRq.setMascotaId(mascota.getMascotaId());
+                if (formulaRq.getMedicoId() == null) {
+                    formulaRq.setMedicoId(medico.getId());
+                }
+                if (formulaRq.getFechaEmision() == null) {
+                    formulaRq.setFechaEmision(historiaMedicaRq.getFechaHora().toLocalDate());
+                }
+                formulaMedicaService.crearFormulaMedica(formulaRq);
+                formulasCreadas++;
+            }
+        }
+
+        String mensaje = formulasCreadas > 0
+                ? "Atención médica e historia clínica registradas con " + formulasCreadas + " fórmula(s) médica(s)"
+                : "Atención médica e historia clínica creadas correctamente";
+        return respuesta(HttpStatus.CREATED.value(), mensaje);
     }
 
     @Override
@@ -165,13 +212,11 @@ public class HistoriaMedicaServiceImpl implements HistoriaMedicaService {
     }
 
     private HistoriaMedica buscarHistoria(Long historiaMedicaId) throws BadRequestException {
-        // Busca la historia o informa que no existe.
         return historiaMedicaRepository.findById(historiaMedicaId)
                 .orElseThrow(() -> new NotFoundException("Historia médica no encontrada"));
     }
 
     private void validarHistoriaMedica(HistoriaMedicaRq historiaMedicaRq) throws BadRequestException {
-        // Comprueba que la solicitud traiga todos los datos obligatorios de la consulta.
         if (historiaMedicaRq == null || historiaMedicaRq.getClienteId() == null
                 || historiaMedicaRq.getMascotaId() == null || historiaMedicaRq.getCitaId() == null
                 || historiaMedicaRq.getMedicoId() == null || historiaMedicaRq.getFechaHora() == null
@@ -183,12 +228,10 @@ public class HistoriaMedicaServiceImpl implements HistoriaMedicaService {
     }
 
     private String limpiarTexto(String texto) {
-        // Quita espacios sobrantes de los campos opcionales.
         return texto == null ? null : texto.trim();
     }
 
     private MiRespuestaRS respuesta(int status, String mensaje) {
-        // Crea una respuesta estándar para informar el resultado de la operación.
         MiRespuestaRS respuesta = new MiRespuestaRS();
         respuesta.setStatus(status);
         respuesta.setMessage(mensaje);

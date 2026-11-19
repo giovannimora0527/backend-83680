@@ -14,6 +14,13 @@ public interface CitaRepository extends JpaRepository<Cita, Long> {
     /** Lista todas las citas desde la más reciente a la más antigua. */
     List<Cita> findAllByOrderByFechaHoraDesc();
 
+    /** Lista todas las citas de un veterinario ordenadas por fecha descendente. */
+    List<Cita> findByMedico_IdOrderByFechaHoraDesc(Long medicoId);
+
+    /** Busca las citas de un veterinario dentro de un rango ordenadas por fecha descendente. */
+    List<Cita> findByMedico_IdAndFechaHoraBetweenOrderByFechaHoraDesc(Long medicoId, LocalDateTime fechaInicial,
+                                                                      LocalDateTime fechaFinal);
+
     /** Busca las citas de un veterinario dentro de un rango de fecha y hora. */
     List<Cita> findByMedico_IdAndFechaHoraBetween(Long medicoId, LocalDateTime fechaInicial,
                                                   LocalDateTime fechaFinal);
