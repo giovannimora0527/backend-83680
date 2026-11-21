@@ -28,6 +28,14 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.io.ByteArrayOutputStream;
+import com.lowagie.text.Document;
+import com.lowagie.text.Element;
+import com.lowagie.text.FontFactory;
+import com.lowagie.text.PageSize;
+import com.lowagie.text.Paragraph;
+import com.lowagie.text.pdf.PdfPTable;
+import com.lowagie.text.pdf.PdfWriter;
 
 @Service
 /** Implementa las operaciones de fórmulas médicas diferenciando la formulación de la dispensación. */
@@ -107,8 +115,7 @@ public class FormulaMedicaServiceImpl implements FormulaMedicaService {
         asignarDatos(formula, formulaRq);
 
         // En la formulación se valida existencia suficiente en inventario, pero NO se descuenta stock.
-        int disponible = formula.getMedicamento().getCantidadDisponible() != null
-                ? formula.getMedicamento().getCantidadDisponible() : 0;
+        int disponible = medicamentoService.obtenerStockVigente(formula.getMedicamento().getId());
         if (disponible < formula.getCantidadSolicitada()) {
             throw new BadRequestException("Inventario insuficiente para formular " + formula.getCantidadSolicitada()
                     + " unidad(es) de " + formula.getMedicamento().getNombre()
@@ -189,8 +196,7 @@ public class FormulaMedicaServiceImpl implements FormulaMedicaService {
             throw new BadRequestException("La cantidad solicitada no puede ser menor a la ya dispensada (" + entregadaActual + ")");
         }
         int cantidadPendiente = formula.getCantidadSolicitada() - entregadaActual;
-        int disponible = formula.getMedicamento().getCantidadDisponible() != null
-                ? formula.getMedicamento().getCantidadDisponible() : 0;
+        int disponible = medicamentoService.obtenerStockVigente(formula.getMedicamento().getId());
         if (disponible < cantidadPendiente) {
             throw new BadRequestException("Inventario insuficiente para la cantidad pendiente por dispensar ("
                     + cantidadPendiente + " unidad(es), disponible: " + disponible + ")");
@@ -304,6 +310,141 @@ public class FormulaMedicaServiceImpl implements FormulaMedicaService {
         return movimientoMedicamentoRepository
                 .findByMedicamentoIdAndReferenciaTipoAndReferenciaIdOrderByFechaRegistroDesc(
                         formula.getMedicamento().getId(), "FORMULA", formulaId);
+    }
+
+    @Override
+    public List<FormulaMedica> listarPendientesDespacho(String buscar, String fecha) {
+        LocalDate fechaFiltro = null;
+        if (fecha != null && !fecha.isBlank()) {
+            try {
+                fechaFiltro = LocalDate.parse(fecha.trim());
+            } catch (Exception e) {
+                throw new BadRequestException("La fecha de despacho no tiene un formato válido");
+            }
+        }
+        String termino = buscar == null ? "" : buscar.trim().toLowerCase();
+        String finalTermino = termino;
+        LocalDate finalFecha = fechaFiltro;
+        return listarFormulasMedicas().stream()
+                .filter(f -> Boolean.TRUE.equals(f.getActivo()))
+                .filter(f -> f.getCantidadEntregada() == null
+                        || f.getCantidadEntregada() < f.getCantidadSolicitada())
+                .filter(f -> finalFecha == null || (f.getFechaEmision() != null
+                        && f.getFechaEmision().equals(finalFecha)))
+                .filter(f -> finalTermino.isBlank()
+                        || coincideDespacho(f, finalTermino))
+                .toList();
+    }
+
+    @Override
+    @Transactional
+    public MiRespuestaRS prepararDespacho(Long formulaId, String usuario) {
+        if (formulaId == null || formulaId <= 0) {
+            throw new BadRequestException("El identificador de la fórmula es obligatorio");
+        }
+        FormulaMedica formula = buscarFormula(formulaId);
+        if (!Boolean.TRUE.equals(formula.getActivo())) {
+            throw new ConflictException("La fórmula ya se encuentra inactiva");
+        }
+        if ((formula.getCantidadEntregada() == null ? 0 : formula.getCantidadEntregada())
+                >= formula.getCantidadSolicitada()) {
+            throw new ConflictException("La fórmula ya fue dispensada en su totalidad");
+        }
+        formula.setEstado(Constantes.FORMULA_EN_PREPARACION);
+        formula.setFechaActualizacionRegistro(LocalDateTime.now());
+        formulaMedicaRepository.save(formula);
+        return respuesta(HttpStatus.OK.value(),
+                "Despacho #" + formulaId + " puesto en preparación"
+                        + ((usuario != null && !usuario.isBlank()) ? " por " + usuario.trim() : ""));
+    }
+
+    @Override
+    @Transactional
+    public MiRespuestaRS despacharFormula(Long formulaId, Integer cantidad, String lote,
+                                          String observacion, String usuario) {
+        if (lote != null && !lote.isBlank()) {
+            throw new BadRequestException("El lote se selecciona automáticamente por FEFO y no puede indicarse manualmente");
+        }
+        FormulaMedica formulaAntesDespacho = buscarFormula(formulaId);
+        if (!Constantes.FORMULA_EN_PREPARACION.equalsIgnoreCase(formulaAntesDespacho.getEstado())) {
+            throw new ConflictException("La fórmula debe ponerse en preparación antes de despacharse");
+        }
+        MiRespuestaRS respuesta = dispensarFormula(formulaId, cantidad, observacion, usuario);
+        FormulaMedica formula = buscarFormula(formulaId);
+        formula.setEstado(formula.getCantidadEntregada() >= formula.getCantidadSolicitada()
+                ? Constantes.FORMULA_DESPACHO_COMPLETO
+                : Constantes.FORMULA_DESPACHO_PARCIAL);
+        formula.setFechaActualizacionRegistro(LocalDateTime.now());
+        formulaMedicaRepository.save(formula);
+        respuesta.setMessage(respuesta.getMessage()
+                + " Estado: " + formula.getEstado()
+                + ((lote != null && !lote.isBlank()) ? " (lote " + lote.trim() + ")" : ""));
+        return respuesta;
+    }
+
+    @Override
+    public byte[] generarComprobanteDespacho(Long formulaId) {
+        FormulaMedica formula = buscarFormula(formulaId);
+        try (ByteArrayOutputStream output = new ByteArrayOutputStream()) {
+            Document document = new Document(PageSize.A4);
+            PdfWriter.getInstance(document, output);
+            document.open();
+            Paragraph titulo = new Paragraph("Comprobante de dispensación",
+                    FontFactory.getFont(FontFactory.HELVETICA_BOLD, 16));
+            titulo.setAlignment(Element.ALIGN_CENTER);
+            document.add(titulo);
+            document.add(new Paragraph(" "));
+            PdfPTable tabla = new PdfPTable(2);
+            tabla.setWidthPercentage(100);
+            tabla.addCell("Fórmula");
+            tabla.addCell("#" + formula.getId());
+            tabla.addCell("Fecha");
+            tabla.addCell(LocalDateTime.now().toString());
+            tabla.addCell("Estado");
+            tabla.addCell(formula.getEstado());
+            tabla.addCell("Medicamento");
+            tabla.addCell(formula.getMedicamento() != null ? formula.getMedicamento().getNombre() : "-");
+            tabla.addCell("Lotes dispensados");
+            List<MovimientoMedicamento> movimientos = consultarHistorialPorFormula(formulaId);
+            String lotes = movimientos.stream().map(m -> m.getCodigoLote() + " (" + m.getCantidad() + ")")
+                    .reduce((a, b) -> a + ", " + b).orElse("-");
+            tabla.addCell(lotes);
+            tabla.addCell("Cantidad formulada");
+            tabla.addCell(String.valueOf(formula.getCantidadSolicitada()));
+            tabla.addCell("Cantidad entregada");
+            tabla.addCell(String.valueOf(formula.getCantidadEntregada()));
+            tabla.addCell("Saldo pendiente");
+            tabla.addCell(String.valueOf(Math.max(0,
+                    formula.getCantidadSolicitada() - formula.getCantidadEntregada())));
+            document.add(tabla);
+            document.close();
+            return output.toByteArray();
+        } catch (Exception e) {
+            throw new RuntimeException("No fue posible generar el comprobante PDF", e);
+        }
+    }
+
+    private boolean coincideDespacho(FormulaMedica formula, String termino) {
+        String propietario = formula.getCita() != null && formula.getCita().getCliente() != null
+                ? ((formula.getCita().getCliente().getNombres() + " "
+                + formula.getCita().getCliente().getApellidos())).toLowerCase()
+                : "";
+        String documento = formula.getCita() != null && formula.getCita().getCliente() != null
+                ? (formula.getCita().getCliente().getNumeroDocumento() == null
+                ? "" : formula.getCita().getCliente().getNumeroDocumento()).toLowerCase()
+                : "";
+        String mascota = formula.getMascota() != null
+                ? (formula.getMascota().getNombreMascota() == null
+                ? "" : formula.getMascota().getNombreMascota()).toLowerCase()
+                : "";
+        String medicamento = formula.getMedicamento() != null
+                ? formula.getMedicamento().getNombre().toLowerCase()
+                : "";
+        return String.valueOf(formula.getId()).contains(termino)
+                || propietario.contains(termino)
+                || documento.contains(termino)
+                || mascota.contains(termino)
+                || medicamento.contains(termino);
     }
 
     private void asignarDatos(FormulaMedica formula, FormulaMedicaRq formulaRq) {

@@ -12,4 +12,8 @@ public interface ClienteRepository extends JpaRepository<Cliente, Long> {
 
     /** Lista los clientes activos ordenados por nombres y apellidos. */
     List<Cliente> findByActivoTrueOrderByNombresAscApellidosAsc();
+    List<Cliente> findAllByOrderByNombresAscApellidosAsc();
+    boolean existsByTipoDocumentoAndNumeroDocumento(String tipoDocumento, String numeroDocumento);
+    boolean existsByTipoDocumentoAndNumeroDocumentoAndClienteIdNot(
+            String tipoDocumento, String numeroDocumento, Long clienteId);
 }

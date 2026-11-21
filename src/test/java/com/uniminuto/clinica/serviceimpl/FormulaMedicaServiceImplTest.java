@@ -115,6 +115,7 @@ class FormulaMedicaServiceImplTest {
         when(formulaMedicaRepository.existsByCita_IdAndMedicamento_IdAndActivoTrue(20L, 100L)).thenReturn(false);
         when(medicoRepository.findById(5L)).thenReturn(Optional.of(medico));
         when(medicamentoRepository.findById(100L)).thenReturn(Optional.of(medicamento));
+        when(medicamentoService.obtenerStockVigente(100L)).thenReturn(30);
 
         MiRespuestaRS res = formulaMedicaService.crearFormulaMedica(rq);
 
@@ -150,6 +151,7 @@ class FormulaMedicaServiceImplTest {
         when(formulaMedicaRepository.existsByCita_IdAndMedicamento_IdAndActivoTrue(20L, 100L)).thenReturn(false);
         when(medicoRepository.findById(5L)).thenReturn(Optional.of(medico));
         when(medicamentoRepository.findById(100L)).thenReturn(Optional.of(medicamento));
+        when(medicamentoService.obtenerStockVigente(100L)).thenReturn(30);
 
         BadRequestException ex = assertThrows(BadRequestException.class,
                 () -> formulaMedicaService.crearFormulaMedica(rq));

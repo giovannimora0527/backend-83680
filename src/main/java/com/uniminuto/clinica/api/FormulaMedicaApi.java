@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import jakarta.servlet.http.HttpServletRequest;
 
 import java.util.List;
 
@@ -87,4 +88,22 @@ public interface FormulaMedicaApi {
     // Consulta el historial de movimientos de inventario asociados a una fórmula.
     @GetMapping(value = "/{formulaId}/historial", produces = "application/json")
     ResponseEntity<List<MovimientoMedicamento>> consultarHistorialPorFormula(@PathVariable Long formulaId);
+
+    @GetMapping(value = "/pendientes-despacho", produces = "application/json")
+    ResponseEntity<List<FormulaMedica>> listarPendientesDespacho(
+            @RequestParam(required = false) String buscar,
+            @RequestParam(required = false) String fecha);
+
+    @PatchMapping(value = "/{formulaId}/preparar", produces = "application/json")
+    ResponseEntity<MiRespuestaRS> prepararDespacho(@PathVariable Long formulaId,
+                                                   HttpServletRequest request);
+
+    @PostMapping(value = "/{formulaId}/despachar", produces = "application/json")
+    ResponseEntity<MiRespuestaRS> despacharFormula(@PathVariable Long formulaId,
+                                                   @RequestParam Integer cantidad,
+                                                   @RequestParam(required = false) String observacion,
+                                                   HttpServletRequest request);
+
+    @GetMapping(value = "/{formulaId}/comprobante-pdf", produces = "application/pdf")
+    ResponseEntity<byte[]> generarComprobanteDespacho(@PathVariable Long formulaId);
 }

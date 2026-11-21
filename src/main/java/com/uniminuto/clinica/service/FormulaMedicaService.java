@@ -38,4 +38,13 @@ public interface FormulaMedicaService {
 
     /** Consulta el historial de movimientos del medicamento asociado a la fórmula. */
     List<MovimientoMedicamento> consultarHistorialPorFormula(Long formulaId);
+
+    List<FormulaMedica> listarPendientesDespacho(String buscar, String fecha);
+
+    MiRespuestaRS prepararDespacho(Long formulaId, String usuario);
+
+    MiRespuestaRS despacharFormula(Long formulaId, Integer cantidad, String lote,
+                                   String observacion, String usuario);
+
+    byte[] generarComprobanteDespacho(Long formulaId);
 }

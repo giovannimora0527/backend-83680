@@ -2,7 +2,11 @@ package com.uniminuto.clinica.repository;
 
 import com.uniminuto.clinica.entity.Medicamento;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import jakarta.persistence.LockModeType;
 
 import java.util.List;
 import java.util.Optional;
@@ -22,4 +26,8 @@ public interface MedicamentoRepository extends JpaRepository<Medicamento, Long> 
 
     /** Obtiene los productos ordenados por fecha de vencimiento para controlar inventario. */
     List<Medicamento> findAllByOrderByFechaVenceAsc();
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select medicamento from Medicamento medicamento where medicamento.id = :id")
+    Optional<Medicamento> findByIdForUpdate(@Param("id") Long id);
 }

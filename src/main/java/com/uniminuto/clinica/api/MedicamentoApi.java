@@ -5,6 +5,8 @@ import com.uniminuto.clinica.entity.MovimientoMedicamento;
 import com.uniminuto.clinica.exception.BadRequestException;
 import com.uniminuto.clinica.models.CargaMasivaMedicamentoRS;
 import com.uniminuto.clinica.models.MiRespuestaRS;
+import com.uniminuto.clinica.models.LoteMedicamentoRq;
+import com.uniminuto.clinica.models.LoteMedicamentoRS;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -16,6 +18,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
+import jakarta.servlet.http.HttpServletRequest;
 
 import java.util.List;
 
@@ -41,7 +44,8 @@ public interface MedicamentoApi {
 
     // Carga masiva desde CSV o XLSX con validación previa y reporte por fila.
     @PostMapping(value = "/carga-masiva", consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = {"application/json"})
-    ResponseEntity<CargaMasivaMedicamentoRS> importarMasivo(@RequestParam("archivo") MultipartFile archivo) throws BadRequestException;
+    ResponseEntity<CargaMasivaMedicamentoRS> importarMasivo(@RequestParam("archivo") MultipartFile archivo,
+            @RequestParam(defaultValue = "false") boolean confirmar, HttpServletRequest request) throws BadRequestException;
 
     // Descuenta la cantidad indicada del inventario y registra la salida.
     @PostMapping(value = "/{medicamentoId}/salida", produces = {"application/json"})
@@ -54,4 +58,10 @@ public interface MedicamentoApi {
     // Consulta el historial de entradas y salidas de inventario por medicamento.
     @GetMapping(value = "/{medicamentoId}/historial", produces = {"application/json"})
     ResponseEntity<List<MovimientoMedicamento>> consultarHistorialInventario(@PathVariable Long medicamentoId) throws BadRequestException;
+
+    @GetMapping(value = "/{medicamentoId}/lotes", produces = {"application/json"})
+    ResponseEntity<List<LoteMedicamentoRS>> listarLotes(@PathVariable Long medicamentoId);
+
+    @PostMapping(value = "/{medicamentoId}/lotes", consumes = {"application/json"}, produces = {"application/json"})
+    ResponseEntity<MiRespuestaRS> registrarLote(@PathVariable Long medicamentoId, @RequestBody LoteMedicamentoRq lote);
 }

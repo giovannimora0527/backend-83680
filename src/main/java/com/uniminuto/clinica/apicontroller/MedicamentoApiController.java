@@ -6,11 +6,14 @@ import com.uniminuto.clinica.entity.MovimientoMedicamento;
 import com.uniminuto.clinica.exception.BadRequestException;
 import com.uniminuto.clinica.models.CargaMasivaMedicamentoRS;
 import com.uniminuto.clinica.models.MiRespuestaRS;
+import com.uniminuto.clinica.models.LoteMedicamentoRq;
+import com.uniminuto.clinica.models.LoteMedicamentoRS;
 import com.uniminuto.clinica.service.MedicamentoService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
+import jakarta.servlet.http.HttpServletRequest;
 
 import java.util.List;
 
@@ -48,8 +51,10 @@ public class MedicamentoApiController implements MedicamentoApi {
 
     @Override
     /** Delega la carga masiva de inventario. */
-    public ResponseEntity<CargaMasivaMedicamentoRS> importarMasivo(MultipartFile archivo) throws BadRequestException {
-        return ResponseEntity.ok(this.medicamentoService.importarMasivo(archivo));
+    public ResponseEntity<CargaMasivaMedicamentoRS> importarMasivo(
+            MultipartFile archivo, boolean confirmar, HttpServletRequest request) throws BadRequestException {
+        String usuario = (String) request.getAttribute("authenticatedUsername");
+        return ResponseEntity.ok(this.medicamentoService.importarMasivo(archivo, confirmar, usuario));
     }
 
     @Override
@@ -63,5 +68,15 @@ public class MedicamentoApiController implements MedicamentoApi {
     /** Consulta el historial de movimientos del medicamento. */
     public ResponseEntity<List<MovimientoMedicamento>> consultarHistorialInventario(Long medicamentoId) throws BadRequestException {
         return ResponseEntity.ok(this.medicamentoService.consultarHistorialInventario(medicamentoId));
+    }
+
+    @Override
+    public ResponseEntity<List<LoteMedicamentoRS>> listarLotes(Long medicamentoId) {
+        return ResponseEntity.ok(medicamentoService.listarLotes(medicamentoId));
+    }
+
+    @Override
+    public ResponseEntity<MiRespuestaRS> registrarLote(Long medicamentoId, LoteMedicamentoRq lote) {
+        return ResponseEntity.status(201).body(medicamentoService.registrarLote(medicamentoId, lote));
     }
 }

@@ -1,11 +1,17 @@
 package com.uniminuto.clinica.serviceimpl;
 
 import com.uniminuto.clinica.entity.Medicamento;
+import com.uniminuto.clinica.entity.CargaMasivaMedicamento;
+import com.uniminuto.clinica.entity.LoteMedicamento;
 import com.uniminuto.clinica.entity.MovimientoMedicamento;
 import com.uniminuto.clinica.exception.BadRequestException;
 import com.uniminuto.clinica.models.CargaMasivaMedicamentoRS;
 import com.uniminuto.clinica.models.ErrorCargaMasivaMedicamento;
 import com.uniminuto.clinica.models.MiRespuestaRS;
+import com.uniminuto.clinica.models.LoteMedicamentoRq;
+import com.uniminuto.clinica.models.LoteMedicamentoRS;
+import com.uniminuto.clinica.repository.LoteMedicamentoRepository;
+import com.uniminuto.clinica.repository.CargaMasivaMedicamentoRepository;
 import com.uniminuto.clinica.repository.MedicamentoRepository;
 import com.uniminuto.clinica.repository.MovimientoMedicamentoRepository;
 import com.uniminuto.clinica.service.MedicamentoService;
@@ -29,6 +35,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.regex.Pattern;
 
 @Service
@@ -45,6 +54,12 @@ public class MedicamentoServiceImpl implements MedicamentoService {
     /** Repositorio que registra los movimientos de inventario. */
     private MovimientoMedicamentoRepository movimientoMedicamentoRepository;
 
+    @Autowired
+    private LoteMedicamentoRepository loteMedicamentoRepository;
+
+    @Autowired
+    private CargaMasivaMedicamentoRepository cargaMasivaRepository;
+
     @Override
     public List<Medicamento> obtenerMedicamentos() throws BadRequestException {
         return medicamentoRepository.findAllByOrderByFechaVenceAsc();
@@ -60,6 +75,7 @@ public class MedicamentoServiceImpl implements MedicamentoService {
     }
 
     @Override
+    @Transactional
     public MiRespuestaRS guardarMedicamento(Medicamento medicamento) throws BadRequestException {
         validarMedicamento(medicamento);
 
@@ -98,6 +114,13 @@ public class MedicamentoServiceImpl implements MedicamentoService {
 
     @Override
     public CargaMasivaMedicamentoRS importarMasivo(MultipartFile archivo) throws BadRequestException {
+        return importarMasivo(archivo, true, "INVENTARIO");
+    }
+
+    @Override
+    @Transactional
+    public CargaMasivaMedicamentoRS importarMasivo(MultipartFile archivo, boolean confirmar, String usuario)
+            throws BadRequestException {
         if (archivo == null || archivo.isEmpty()) {
             throw new BadRequestException("Debe seleccionar un archivo para realizar la carga masiva");
         }
@@ -140,6 +163,8 @@ public class MedicamentoServiceImpl implements MedicamentoService {
 
         CargaMasivaMedicamentoRS resultado = new CargaMasivaMedicamentoRS();
         List<Medicamento> validos = new ArrayList<>();
+        Set<String> codigosArchivo = new HashSet<>();
+        Set<String> nombresArchivo = new HashSet<>();
 
         for (int i = 1; i < filas.size(); i++) {
             String[] fila = filas.get(i);
@@ -159,6 +184,12 @@ public class MedicamentoServiceImpl implements MedicamentoService {
                 if (medicamentoRepository.existsByNombreIgnoreCase(medicamento.getNombre().trim())) {
                     throw new BadRequestException("Nombre duplicado en la base de datos");
                 }
+                if (!codigosArchivo.add(medicamento.getCodigo().trim().toUpperCase(Locale.ROOT))) {
+                    throw new BadRequestException("Código duplicado en el archivo");
+                }
+                if (!nombresArchivo.add(medicamento.getNombre().trim().toLowerCase(Locale.ROOT))) {
+                    throw new BadRequestException("Nombre duplicado en el archivo");
+                }
                 medicamento.setFechaCreacionRegistro(LocalDateTime.now());
                 medicamento.setFechaModificacionRegistro(LocalDateTime.now());
                 validos.add(medicamento);
@@ -173,29 +204,40 @@ public class MedicamentoServiceImpl implements MedicamentoService {
         resultado.setRegistrosValidos(validos.size());
         resultado.setRegistrosInvalidos(resultado.getErrores().size());
 
-        if (!resultado.getErrores().isEmpty()) {
+        if (!confirmar) {
+            resultado.setImportados(validos);
             return resultado;
         }
 
-        List<Medicamento> importados = medicamentoRepository.saveAll(validos);
+        List<Medicamento> importados = validos.isEmpty() ? List.of() : medicamentoRepository.saveAll(validos);
         for (Medicamento imp : importados) {
             if (imp.getCantidadDisponible() != null && imp.getCantidadDisponible() > 0) {
                 registrarMovimientoEntrada(imp.getId(), imp.getCantidadDisponible(),
-                        "CARGA MASIVA INVENTARIO", "CARGA_MASIVA", imp.getId());
+                        "CARGA MASIVA INVENTARIO", "CARGA_MASIVA", imp.getId(), usuario);
             }
         }
         resultado.setImportados(importados);
+        CargaMasivaMedicamento carga = new CargaMasivaMedicamento();
+        carga.setNombreArchivo(archivo.getOriginalFilename());
+        carga.setTotalRegistros(resultado.getTotalRegistros());
+        carga.setRegistrosImportados(importados.size());
+        carga.setRegistrosInvalidos(resultado.getRegistrosInvalidos());
+        carga.setUsuarioRegistro(usuario == null || usuario.isBlank() ? "SISTEMA" : usuario);
+        carga.setFechaRegistro(LocalDateTime.now());
+        cargaMasivaRepository.save(carga);
         return resultado;
     }
 
     @Override
+    @Transactional
     public MiRespuestaRS actualizarMedicamento(Medicamento medicamento) throws BadRequestException {
         if (medicamento == null || medicamento.getId() == null) {
             throw new BadRequestException("El identificador del medicamento es obligatorio para actualizar");
         }
 
-        Medicamento medicamentoActual = medicamentoRepository.findById(medicamento.getId())
+        Medicamento medicamentoActual = medicamentoRepository.findByIdForUpdate(medicamento.getId())
                 .orElseThrow(() -> new BadRequestException("Medicamento no encontrado"));
+        asegurarLoteInicial(medicamentoActual);
 
         validarMedicamento(medicamento);
 
@@ -223,45 +265,44 @@ public class MedicamentoServiceImpl implements MedicamentoService {
         medicamentoActual
                 .setPresentacion(medicamento.getPresentacion() == null ? null : medicamento.getPresentacion().trim());
         medicamentoActual.setCodigo(codigo);
-        medicamentoActual.setLote(medicamento.getLote() == null ? null : medicamento.getLote().trim());
         medicamentoActual.setRegistroInvima(
                 medicamento.getRegistroInvima() == null ? null : medicamento.getRegistroInvima().trim());
         medicamentoActual.setRequiereRegistroInvima(Boolean.TRUE.equals(medicamento.getRequiereRegistroInvima()));
-        medicamentoActual.setPrecioCompra(medicamento.getPrecioCompra());
         medicamentoActual.setPrecioVenta(medicamento.getPrecioVenta());
-        medicamentoActual.setCantidadDisponible(medicamento.getCantidadDisponible());
         medicamentoActual.setStockMinimo(medicamento.getStockMinimo());
-        medicamentoActual.setFechaCompra(medicamento.getFechaCompra());
-        medicamentoActual.setFechaIngresoInventario(medicamento.getFechaIngresoInventario());
-        medicamentoActual.setFechaVence(medicamento.getFechaVence());
         medicamentoActual.setFechaProximoPedido(medicamento.getFechaProximoPedido());
         medicamentoActual.setActivo(medicamento.getActivo() == null || medicamento.getActivo());
         medicamentoActual.setFechaModificacionRegistro(LocalDateTime.now());
 
-        medicamentoRepository.save(medicamentoActual);
         if (stockNuevo > stockAnterior) {
+            medicamentoActual.setCantidadDisponible(stockNuevo);
+            medicamentoRepository.save(medicamentoActual);
             registrarMovimientoEntrada(medicamentoActual.getId(), stockNuevo - stockAnterior,
                     "AJUSTE DE ENTRADA / REABASTECIMIENTO", "AJUSTE_INVENTARIO", medicamentoActual.getId());
         } else if (stockNuevo < stockAnterior) {
-            MovimientoMedicamento movSalida = new MovimientoMedicamento();
-            movSalida.setMedicamentoId(medicamentoActual.getId());
-            movSalida.setTipo("SALIDA");
-            movSalida.setCantidad(stockAnterior - stockNuevo);
-            movSalida.setMotivo("AJUSTE DE SALIDA DE INVENTARIO");
-            movSalida.setReferenciaTipo("AJUSTE_INVENTARIO");
-            movSalida.setReferenciaId(medicamentoActual.getId());
-            movSalida.setUsuarioRegistro("INVENTARIO");
-            movSalida.setFechaRegistro(LocalDateTime.now());
-            movimientoMedicamentoRepository.save(movSalida);
+            consumirLotesParaAjuste(medicamentoActual, stockAnterior - stockNuevo);
+            medicamentoActual.setCantidadDisponible(stockNuevo);
+            medicamentoRepository.save(medicamentoActual);
+        } else {
+            medicamentoActual.setCantidadDisponible(stockNuevo);
+            medicamentoRepository.save(medicamentoActual);
         }
         return respuesta("Medicamento actualizado correctamente");
     }
 
     private void registrarMovimientoEntrada(Long medicamentoId, Integer cantidad, String motivo,
             String referenciaTipo, Long referenciaId) {
+        registrarMovimientoEntrada(medicamentoId, cantidad, motivo, referenciaTipo, referenciaId, "INVENTARIO");
+    }
+
+    private void registrarMovimientoEntrada(Long medicamentoId, Integer cantidad, String motivo,
+            String referenciaTipo, Long referenciaId, String usuario) {
         if (movimientoMedicamentoRepository == null || medicamentoId == null || cantidad == null || cantidad <= 0) {
             return;
         }
+        Medicamento medicamento = medicamentoRepository.findByIdForUpdate(medicamentoId)
+                .orElseThrow(() -> new BadRequestException("Medicamento no encontrado"));
+        LoteMedicamento lote = crearLoteDesdeMedicamento(medicamento, cantidad);
         MovimientoMedicamento mov = new MovimientoMedicamento();
         mov.setMedicamentoId(medicamentoId);
         mov.setTipo("ENTRADA");
@@ -269,8 +310,9 @@ public class MedicamentoServiceImpl implements MedicamentoService {
         mov.setMotivo(motivo);
         mov.setReferenciaTipo(referenciaTipo);
         mov.setReferenciaId(referenciaId);
-        mov.setUsuarioRegistro("INVENTARIO");
+        mov.setUsuarioRegistro(usuario == null || usuario.isBlank() ? "SISTEMA" : usuario.trim());
         mov.setFechaRegistro(LocalDateTime.now());
+        mov.setCodigoLote(lote.getCodigoLote());
         movimientoMedicamentoRepository.save(mov);
     }
 
@@ -292,38 +334,42 @@ public class MedicamentoServiceImpl implements MedicamentoService {
             throw new BadRequestException("La cantidad a descontar debe ser mayor que cero");
         }
 
-        Medicamento medicamento = medicamentoRepository.findById(medicamentoId)
+        Medicamento medicamento = medicamentoRepository.findByIdForUpdate(medicamentoId)
                 .orElseThrow(() -> new BadRequestException("Medicamento no encontrado"));
 
         if (!Boolean.TRUE.equals(medicamento.getActivo())) {
             throw new BadRequestException("No se puede dispensar un medicamento inactivo");
         }
-        if (medicamento.getFechaVence() != null && medicamento.getFechaVence().isBefore(LocalDate.now())) {
-            throw new BadRequestException(
-                    "No se puede dispensar un medicamento vencido (venció el " + medicamento.getFechaVence() + ")");
-        }
-        if (medicamento.getCantidadDisponible() < cantidad) {
+        asegurarLoteInicial(medicamento);
+        List<LoteMedicamento> lotes = loteMedicamentoRepository.buscarDisponiblesPorVencer(medicamentoId, LocalDate.now());
+        int disponibleVigente = lotes.stream().mapToInt(LoteMedicamento::getCantidadDisponible).sum();
+        if (disponibleVigente < cantidad) {
+            if (medicamento.getCantidadDisponible() >= cantidad) {
+                throw new BadRequestException("No hay suficientes lotes vigentes; las unidades restantes están vencidas");
+            }
             throw new BadRequestException("No hay suficiente inventario para despachar " + cantidad + " unidades");
         }
 
-        medicamento.setCantidadDisponible(medicamento.getCantidadDisponible() - cantidad);
+        int cantidadPendiente = cantidad;
+        List<MovimientoMedicamento> movimientos = new ArrayList<>();
+        for (LoteMedicamento lote : lotes) {
+            if (cantidadPendiente == 0) break;
+            int salida = Math.min(cantidadPendiente, lote.getCantidadDisponible());
+            lote.setCantidadDisponible(lote.getCantidadDisponible() - salida);
+            movimientos.add(crearMovimientoSalida(medicamentoId, salida, motivo, referenciaId,
+                    referenciaTipo, usuarioRegistro, lote.getCodigoLote()));
+            cantidadPendiente -= salida;
+        }
+        loteMedicamentoRepository.saveAll(lotes);
+        int stockRegistrado = medicamento.getCantidadDisponible() == null ? 0 : medicamento.getCantidadDisponible();
+        medicamento.setCantidadDisponible(Math.max(0, stockRegistrado - cantidad));
         medicamento.setFechaModificacionRegistro(LocalDateTime.now());
         medicamentoRepository.save(medicamento);
+        movimientoMedicamentoRepository.saveAll(movimientos);
 
-        MovimientoMedicamento movimiento = new MovimientoMedicamento();
-        movimiento.setMedicamentoId(medicamentoId);
-        movimiento.setTipo("SALIDA");
-        movimiento.setCantidad(cantidad);
-        movimiento.setMotivo(motivo == null || motivo.isBlank() ? "DESPACHO" : motivo.trim());
-        movimiento.setReferenciaId(referenciaId);
-        movimiento.setReferenciaTipo(
-                referenciaTipo == null || referenciaTipo.isBlank() ? "AJUSTE" : referenciaTipo.trim());
-        movimiento.setUsuarioRegistro(
-                usuarioRegistro == null || usuarioRegistro.isBlank() ? "SISTEMA" : usuarioRegistro.trim());
-        movimiento.setFechaRegistro(LocalDateTime.now());
-        movimientoMedicamentoRepository.save(movimiento);
-
-        return respuesta("Salida de inventario registrada correctamente");
+        return respuesta("Salida registrada por FEFO: "
+                + movimientos.stream().map(m -> m.getCodigoLote() + " (" + m.getCantidad() + ")")
+                        .reduce((a, b) -> a + ", " + b).orElse(""));
     }
 
     @Override
@@ -333,6 +379,161 @@ public class MedicamentoServiceImpl implements MedicamentoService {
         }
         consultarMedicamento(medicamentoId);
         return movimientoMedicamentoRepository.findByMedicamentoIdOrderByFechaRegistroDesc(medicamentoId);
+    }
+
+    @Override
+    @Transactional
+    public MiRespuestaRS registrarLote(Long medicamentoId, LoteMedicamentoRq solicitud) {
+        Medicamento medicamento = medicamentoRepository.findByIdForUpdate(medicamentoId)
+                .orElseThrow(() -> new BadRequestException("Medicamento no encontrado"));
+        validarLote(solicitud);
+        if (!Boolean.TRUE.equals(medicamento.getActivo())) {
+            throw new BadRequestException("No se pueden registrar lotes para un medicamento inactivo");
+        }
+
+        LoteMedicamento lote = new LoteMedicamento();
+        lote.setMedicamento(medicamento);
+        lote.setCodigoLote(solicitud.getCodigoLote().trim());
+        lote.setCantidadDisponible(solicitud.getCantidad());
+        lote.setPrecioCompra(solicitud.getPrecioCompra());
+        lote.setFechaCompra(solicitud.getFechaCompra());
+        lote.setFechaIngreso(solicitud.getFechaIngreso());
+        lote.setFechaVencimiento(solicitud.getFechaVencimiento());
+        lote.setActivo(true);
+        lote.setFechaCreacion(LocalDateTime.now());
+        loteMedicamentoRepository.save(lote);
+
+        int stock = medicamento.getCantidadDisponible() == null ? 0 : medicamento.getCantidadDisponible();
+        medicamento.setCantidadDisponible(stock + solicitud.getCantidad());
+        medicamento.setLote(lote.getCodigoLote());
+        medicamento.setPrecioCompra(solicitud.getPrecioCompra());
+        medicamento.setFechaCompra(solicitud.getFechaCompra());
+        medicamento.setFechaIngresoInventario(solicitud.getFechaIngreso());
+        medicamento.setFechaVence(primeraFechaVencimiento(medicamentoId, solicitud.getFechaVencimiento()));
+        medicamento.setFechaModificacionRegistro(LocalDateTime.now());
+        medicamentoRepository.save(medicamento);
+
+        MovimientoMedicamento movimiento = new MovimientoMedicamento();
+        movimiento.setMedicamentoId(medicamentoId);
+        movimiento.setTipo("ENTRADA");
+        movimiento.setCantidad(solicitud.getCantidad());
+        movimiento.setMotivo("INGRESO DE LOTE " + lote.getCodigoLote());
+        movimiento.setReferenciaTipo("INGRESO_LOTE");
+        movimiento.setReferenciaId(lote.getId());
+        movimiento.setUsuarioRegistro("INVENTARIO");
+        movimiento.setFechaRegistro(LocalDateTime.now());
+        movimiento.setCodigoLote(lote.getCodigoLote());
+        movimientoMedicamentoRepository.save(movimiento);
+        return respuesta("Lote registrado correctamente");
+    }
+
+    @Override
+    @Transactional
+    public List<LoteMedicamentoRS> listarLotes(Long medicamentoId) {
+        Medicamento medicamento = medicamentoRepository.findById(medicamentoId)
+                .orElseThrow(() -> new BadRequestException("Medicamento no encontrado"));
+        asegurarLoteInicial(medicamento);
+        return loteMedicamentoRepository
+                .findByMedicamentoIdOrderByFechaVencimientoAscFechaIngresoAscIdAsc(medicamentoId)
+                .stream().map(l -> new LoteMedicamentoRS(l.getId(), medicamentoId, l.getCodigoLote(),
+                        l.getCantidadDisponible(), l.getPrecioCompra(), l.getFechaCompra(), l.getFechaIngreso(),
+                        l.getFechaVencimiento(), l.getActivo()))
+                .toList();
+    }
+
+    @Override
+    @Transactional
+    public int obtenerStockVigente(Long medicamentoId) {
+        Medicamento medicamento = medicamentoRepository.findById(medicamentoId)
+                .orElseThrow(() -> new BadRequestException("Medicamento no encontrado"));
+        asegurarLoteInicial(medicamento);
+        return loteMedicamentoRepository.buscarDisponiblesPorVencer(medicamentoId, LocalDate.now())
+                .stream().mapToInt(LoteMedicamento::getCantidadDisponible).sum();
+    }
+
+    private void asegurarLoteInicial(Medicamento medicamento) {
+        if (loteMedicamentoRepository.existsByMedicamentoId(medicamento.getId())
+                || medicamento.getCantidadDisponible() == null || medicamento.getCantidadDisponible() <= 0) {
+            return;
+        }
+        crearLoteDesdeMedicamento(medicamento, medicamento.getCantidadDisponible());
+    }
+
+    private LoteMedicamento crearLoteDesdeMedicamento(Medicamento medicamento, Integer cantidad) {
+        LoteMedicamento lote = new LoteMedicamento();
+        lote.setMedicamento(medicamento);
+        lote.setCodigoLote(medicamento.getLote() == null || medicamento.getLote().isBlank()
+                ? "LEGACY-" + medicamento.getId() : medicamento.getLote().trim());
+        lote.setCantidadDisponible(cantidad);
+        lote.setPrecioCompra(medicamento.getPrecioCompra());
+        lote.setFechaCompra(medicamento.getFechaCompra() == null ? LocalDate.now() : medicamento.getFechaCompra());
+        lote.setFechaIngreso(medicamento.getFechaIngresoInventario() == null
+                ? LocalDate.now() : medicamento.getFechaIngresoInventario());
+        lote.setFechaVencimiento(medicamento.getFechaVence() == null
+                ? LocalDate.now().plusYears(1) : medicamento.getFechaVence());
+        lote.setActivo(true);
+        lote.setFechaCreacion(LocalDateTime.now());
+        return loteMedicamentoRepository.save(lote);
+    }
+
+    private void consumirLotesParaAjuste(Medicamento medicamento, int cantidad) {
+        asegurarLoteInicial(medicamento);
+        List<LoteMedicamento> lotes = loteMedicamentoRepository.buscarTodosParaAjuste(medicamento.getId());
+        int total = lotes.stream().mapToInt(LoteMedicamento::getCantidadDisponible).sum();
+        if (total < cantidad) {
+            throw new BadRequestException("No se puede reducir el inventario por debajo de las existencias trazadas por lote");
+        }
+        int pendiente = cantidad;
+        List<MovimientoMedicamento> movimientos = new ArrayList<>();
+        for (LoteMedicamento lote : lotes) {
+            if (pendiente == 0) break;
+            int salida = Math.min(pendiente, lote.getCantidadDisponible());
+            lote.setCantidadDisponible(lote.getCantidadDisponible() - salida);
+            movimientos.add(crearMovimientoSalida(medicamento.getId(), salida,
+                    "AJUSTE DE SALIDA DE INVENTARIO", medicamento.getId(), "AJUSTE_INVENTARIO",
+                    "INVENTARIO", lote.getCodigoLote()));
+            pendiente -= salida;
+        }
+        loteMedicamentoRepository.saveAll(lotes);
+        movimientoMedicamentoRepository.saveAll(movimientos);
+    }
+
+    private MovimientoMedicamento crearMovimientoSalida(Long medicamentoId, int cantidad, String motivo,
+            Long referenciaId, String referenciaTipo, String usuario, String codigoLote) {
+        MovimientoMedicamento movimiento = new MovimientoMedicamento();
+        movimiento.setMedicamentoId(medicamentoId);
+        movimiento.setTipo("SALIDA");
+        movimiento.setCantidad(cantidad);
+        movimiento.setMotivo(motivo == null || motivo.isBlank() ? "DESPACHO" : motivo.trim());
+        movimiento.setReferenciaId(referenciaId);
+        movimiento.setReferenciaTipo(referenciaTipo == null || referenciaTipo.isBlank() ? "AJUSTE" : referenciaTipo.trim());
+        movimiento.setUsuarioRegistro(usuario == null || usuario.isBlank() ? "SISTEMA" : usuario.trim());
+        movimiento.setFechaRegistro(LocalDateTime.now());
+        movimiento.setCodigoLote(codigoLote);
+        return movimiento;
+    }
+
+    private LocalDate primeraFechaVencimiento(Long medicamentoId, LocalDate fallback) {
+        return loteMedicamentoRepository
+                .findByMedicamentoIdOrderByFechaVencimientoAscFechaIngresoAscIdAsc(medicamentoId)
+                .stream().filter(l -> l.getCantidadDisponible() > 0)
+                .map(LoteMedicamento::getFechaVencimiento).filter(Objects::nonNull)
+                .filter(fecha -> !fecha.isBefore(LocalDate.now())).findFirst().orElse(fallback);
+    }
+
+    private void validarLote(LoteMedicamentoRq lote) {
+        if (lote == null || lote.getCodigoLote() == null || lote.getCodigoLote().isBlank()
+                || lote.getCodigoLote().trim().length() > 50 || lote.getCantidad() == null || lote.getCantidad() <= 0
+                || lote.getPrecioCompra() == null || lote.getPrecioCompra().compareTo(BigDecimal.ZERO) <= 0
+                || lote.getFechaCompra() == null || lote.getFechaIngreso() == null
+                || lote.getFechaVencimiento() == null) {
+            throw new BadRequestException("Lote, cantidad positiva, precio de compra y fechas son obligatorios");
+        }
+        if (lote.getFechaCompra().isAfter(lote.getFechaIngreso())
+                || lote.getFechaIngreso().isAfter(LocalDate.now())
+                || lote.getFechaVencimiento().isBefore(LocalDate.now())) {
+            throw new BadRequestException("Las fechas del lote no son válidas o el lote ya está vencido");
+        }
     }
 
     private List<String[]> leerCsv(MultipartFile archivo) throws IOException {

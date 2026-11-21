@@ -9,7 +9,10 @@ import com.uniminuto.clinica.service.FormulaMedicaService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.RestController;
+import jakarta.servlet.http.HttpServletRequest;
 
 import java.util.List;
 
@@ -74,5 +77,35 @@ public class FormulaMedicaApiController implements FormulaMedicaApi {
     /** Delega la consulta del historial de movimientos de la fórmula. */
     public ResponseEntity<List<MovimientoMedicamento>> consultarHistorialPorFormula(Long formulaId) {
         return ResponseEntity.ok(formulaMedicaService.consultarHistorialPorFormula(formulaId));
+    }
+
+    @Override
+    public ResponseEntity<List<FormulaMedica>> listarPendientesDespacho(String buscar, String fecha) {
+        return ResponseEntity.ok(formulaMedicaService.listarPendientesDespacho(buscar, fecha));
+    }
+
+    @Override
+    public ResponseEntity<MiRespuestaRS> prepararDespacho(Long formulaId, HttpServletRequest request) {
+        String usuarioAutenticado = (String) request.getAttribute("authenticatedUsername");
+        return ResponseEntity.ok(formulaMedicaService.prepararDespacho(formulaId, usuarioAutenticado));
+    }
+
+    @Override
+    public ResponseEntity<MiRespuestaRS> despacharFormula(Long formulaId, Integer cantidad,
+                                                          String observacion,
+                                                          HttpServletRequest request) {
+        String usuarioAutenticado = (String) request.getAttribute("authenticatedUsername");
+        return ResponseEntity.ok(formulaMedicaService.despacharFormula(
+                formulaId, cantidad, null, observacion, usuarioAutenticado));
+    }
+
+    @Override
+    public ResponseEntity<byte[]> generarComprobanteDespacho(Long formulaId) {
+        byte[] pdf = formulaMedicaService.generarComprobanteDespacho(formulaId);
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION,
+                        "attachment; filename=\"comprobante-despacho-" + formulaId + ".pdf\"")
+                .contentType(MediaType.APPLICATION_PDF)
+                .body(pdf);
     }
 }

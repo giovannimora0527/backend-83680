@@ -63,6 +63,16 @@ public class GlobalExceptionHandler {
                 .body(error);
     }
 
+    @ExceptionHandler(UnauthorizedException.class)
+    public ResponseEntity<ErrorResponse> handleUnauthorized(UnauthorizedException ex) {
+        ErrorResponse error = new ErrorResponse(
+                HttpStatus.UNAUTHORIZED.value(),
+                "UNAUTHORIZED",
+                ex.getMessage()
+        );
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
+    }
+
     @ExceptionHandler(HttpMessageNotReadableException.class)
     /** Atiende cuerpos JSON mal formados o con fechas/números inválidos. */
     public ResponseEntity<ErrorResponse> handleMensajeNoLegible(HttpMessageNotReadableException ex) {

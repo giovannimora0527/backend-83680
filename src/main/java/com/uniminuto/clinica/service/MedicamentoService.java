@@ -5,6 +5,8 @@ import com.uniminuto.clinica.entity.MovimientoMedicamento;
 import com.uniminuto.clinica.exception.BadRequestException;
 import com.uniminuto.clinica.models.CargaMasivaMedicamentoRS;
 import com.uniminuto.clinica.models.MiRespuestaRS;
+import com.uniminuto.clinica.models.LoteMedicamentoRq;
+import com.uniminuto.clinica.models.LoteMedicamentoRS;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
@@ -27,6 +29,8 @@ public interface MedicamentoService {
     /** Importa medicamentos desde un archivo CSV o Excel validando la estructura y los datos. */
     CargaMasivaMedicamentoRS importarMasivo(MultipartFile archivo) throws BadRequestException;
 
+    CargaMasivaMedicamentoRS importarMasivo(MultipartFile archivo, boolean confirmar, String usuario) throws BadRequestException;
+
     /** Registra una salida del inventario y genera el movimiento asociado. */
     MiRespuestaRS registrarSalidaInventario(Long medicamentoId, Integer cantidad, String motivo, Long referenciaId, String referenciaTipo) throws BadRequestException;
 
@@ -35,4 +39,10 @@ public interface MedicamentoService {
 
     /** Consulta el historial de movimientos del medicamento. */
     List<MovimientoMedicamento> consultarHistorialInventario(Long medicamentoId) throws BadRequestException;
+
+    MiRespuestaRS registrarLote(Long medicamentoId, LoteMedicamentoRq lote);
+
+    List<LoteMedicamentoRS> listarLotes(Long medicamentoId);
+
+    int obtenerStockVigente(Long medicamentoId);
 }

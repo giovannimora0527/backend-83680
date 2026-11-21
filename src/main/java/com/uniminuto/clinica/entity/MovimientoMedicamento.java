@@ -56,4 +56,7 @@ public class MovimientoMedicamento {
     @Column(name = "observacion", columnDefinition = "TEXT")
     /** Descripción adicional del movimiento. */
     private String observacion;
+
+    @Column(name = "codigo_lote", length = 50)
+    private String codigoLote;
 }

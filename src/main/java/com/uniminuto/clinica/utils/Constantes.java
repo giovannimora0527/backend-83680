@@ -51,6 +51,9 @@ public final class Constantes {
     public static final String FORMULA_ENTREGADA = "ENTREGADA";
     /** Estado de una fórmula anulada o cancelada. */
     public static final String FORMULA_CANCELADA = "CANCELADA";
+    public static final String FORMULA_EN_PREPARACION = "EN_PREPARACION";
+    public static final String FORMULA_DESPACHO_PARCIAL = "DESPACHO_PARCIAL";
+    public static final String FORMULA_DESPACHO_COMPLETO = "DESPACHO_COMPLETO";
 
     /** Estado de factura pendiente de pago. */
     public static final String FACTURA_PENDIENTE = "PENDIENTE";
@@ -84,6 +87,7 @@ public final class Constantes {
     public static final String ROL_SECRETARIA = "SECRETARIA";
     public static final String ROL_VETERINARIO = "VETERINARIO";
     public static final String ROL_DESPACHO_MEDICO = "DESPACHO_MEDICO";
+    public static final String ROL_CLIENTE = "CLIENTE";
 
     /** Constructor privado, la clase solo contiene constantes. */
     private Constantes() {

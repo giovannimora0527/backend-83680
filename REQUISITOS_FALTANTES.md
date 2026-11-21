@@ -1,12 +1,15 @@
 # Requisitos faltantes del examen final
 
-Este documento organiza los requerimientos del examen que aún no están implementados en la solución actual. Sirve como backlog para trabajar por módulos y requisitos concretos.
+Este documento resume el estado de implementación de los requerimientos del examen. Las casillas indican funcionalidad implementada; no sustituyen una validación de extremo a extremo en el entorno de presentación.
 
 ## Estado general
 
-- Backend: parcialmente implementado
-- Frontend: parcialmente implementado
-- Requisitos del examen: faltan la mayoría de los módulos funcionales del negocio
+- Backend: implementado en sus módulos principales
+- Frontend: implementado en sus módulos principales
+- Exportación PDF/Excel, despacho y permisos por perfil incorporados
+- Pendiente de validar con MySQL y Compose: arranque integrado, persistencia/esquema actualizado y recorrido completo de los perfiles
+- Pendiente de capturar durante una ejecución real: evidencias visuales para la sustentación
+- Limitación conocida: el lector CSV no maneja comas dentro de campos entrecomillados; usar valores sin comas internas
 
 ## Requisito 1. Módulo de inventario y gestión de medicamentos
 
@@ -211,20 +214,20 @@ Este documento organiza los requerimientos del examen que aún no están impleme
 ### Estado: No implementado
 
 #### 5.1 Gestión de usuarios y permisos
-- [ ] Crear perfil DESPACHO_MEDICO
-- [ ] Permitir acceso solo a inventario y despacho
-- [ ] Bloquear acceso a citas médicas
-- [ ] Bloquear acceso a atención médica
-- [ ] Bloquear acceso a historias clínicas
-- [ ] Bloquear acceso a creación de fórmulas
-- [ ] Bloquear acceso a facturación
-- [ ] Bloquear acceso a reportes administrativos y financieros
-- [ ] Bloquear acceso a administración de usuarios
-- [ ] Controlar permisos desde backend
-- [ ] Restringir navegación del frontend por perfil
+- [x] Crear perfil DESPACHO_MEDICO
+- [x] Permitir acceso solo a inventario y despacho
+- [x] Bloquear acceso a citas médicas
+- [x] Bloquear acceso a atención médica
+- [x] Bloquear acceso a historias clínicas
+- [x] Bloquear acceso a creación de fórmulas
+- [x] Bloquear acceso a facturación
+- [x] Bloquear acceso a reportes administrativos y financieros
+- [x] Bloquear acceso a administración de usuarios
+- [x] Controlar permisos desde backend
+- [x] Restringir navegación del frontend por perfil
 
 #### 5.2 Consulta de fórmulas pendientes de despacho
-- [ ] Listar fórmulas pendientes
+- [x] Listar fórmulas pendientes
 - [ ] Mostrar número o identificador
 - [ ] Mostrar fecha de generación
 - [ ] Mostrar médico veterinario
@@ -236,7 +239,7 @@ Este documento organiza los requerimientos del examen que aún no están impleme
 - [ ] Mostrar duración del tratamiento
 - [ ] Mostrar indicaciones médicas
 - [ ] Mostrar estado del despacho
-- [ ] Buscar por identificación, propietario, mascota o fecha
+- [x] Buscar por identificación, propietario, mascota o fecha
 
 #### 5.3 Validación y preparación del despacho
 - [ ] Consultar cantidades formuladas
@@ -249,29 +252,29 @@ Este documento organiza los requerimientos del examen que aún no están impleme
 - [ ] Registrar cantidades entregadas
 - [ ] Identificar medicamentos sin existencia
 - [ ] Priorizar lotes con vencimiento más próximo
-- [ ] Permitir despachos parciales
-- [ ] Impedir entregas con inventario insuficiente
+- [x] Permitir despachos parciales
+- [x] Impedir entregas con inventario insuficiente
 
 #### 5.4 Confirmación de entrega y actualización del inventario
-- [ ] Registrar fecha y hora de dispensación
-- [ ] Registrar usuario responsable
-- [ ] Registrar medicamentos entregados
-- [ ] Registrar cantidades efectivamente dispensadas
-- [ ] Identificar lotes utilizados
-- [ ] Descontar cantidades del inventario
-- [ ] Generar movimientos de salida
-- [ ] Relacionar movimientos con la fórmula
-- [ ] Generar comprobante PDF
-- [ ] Ejecutar transacción atómica
-- [ ] Garantizar consistencia ante errores
+- [x] Registrar fecha y hora de dispensación
+- [x] Registrar usuario responsable
+- [x] Registrar medicamentos entregados
+- [x] Registrar cantidades efectivamente dispensadas
+- [x] Identificar lotes utilizados
+- [x] Descontar cantidades del inventario
+- [x] Generar movimientos de salida
+- [x] Relacionar movimientos con la fórmula
+- [x] Generar comprobante PDF
+- [x] Ejecutar transacción atómica
+- [x] Garantizar consistencia ante errores
 
 #### 5.5 Estados del proceso de despacho
-- [ ] Pendiente de despacho
-- [ ] En preparación
-- [ ] Despacho parcial
-- [ ] Despacho completo
-- [ ] Entregado
-- [ ] Cancelado
+- [x] Pendiente de despacho
+- [x] En preparación
+- [x] Despacho parcial
+- [x] Despacho completo
+- [x] Entregado
+- [x] Cancelado
 
 ---
 

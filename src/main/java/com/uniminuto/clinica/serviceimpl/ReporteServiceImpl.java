@@ -15,6 +15,7 @@ import com.uniminuto.clinica.entity.Mascota;
 import com.uniminuto.clinica.entity.Medicamento;
 import com.uniminuto.clinica.entity.Medico;
 import com.uniminuto.clinica.entity.MovimientoMedicamento;
+import com.uniminuto.clinica.entity.LoteMedicamento;
 import com.uniminuto.clinica.exception.BadRequestException;
 import com.uniminuto.clinica.models.ReporteFinancieroRS;
 import com.uniminuto.clinica.models.ReporteFinancieroRS.ItemFinancieroAgrupado;
@@ -29,6 +30,7 @@ import com.uniminuto.clinica.repository.CitaRepository;
 import com.uniminuto.clinica.repository.FacturaRepository;
 import com.uniminuto.clinica.repository.MedicamentoRepository;
 import com.uniminuto.clinica.repository.MovimientoMedicamentoRepository;
+import com.uniminuto.clinica.repository.LoteMedicamentoRepository;
 import com.uniminuto.clinica.service.ReporteService;
 import com.uniminuto.clinica.utils.Constantes;
 import org.apache.poi.ss.usermodel.BorderStyle;
@@ -84,6 +86,9 @@ public class ReporteServiceImpl implements ReporteService {
 
     @Autowired
     private MovimientoMedicamentoRepository movimientoMedicamentoRepository;
+
+    @Autowired
+    private LoteMedicamentoRepository loteMedicamentoRepository;
 
     @Autowired
     private CitaRepository citaRepository;
@@ -309,29 +314,34 @@ public class ReporteServiceImpl implements ReporteService {
         BigDecimal valorVentaTotal = BigDecimal.ZERO;
 
         for (Medicamento med : medicamentos) {
-            int stock = med.getCantidadDisponible() != null ? med.getCantidadDisponible() : 0;
+            List<LoteReporte> lotes = loteMedicamentoRepository == null || med.getId() == null
+                    ? List.of()
+                    : loteMedicamentoRepository
+                            .findByMedicamentoIdOrderByFechaVencimientoAscFechaIngresoAscIdAsc(med.getId())
+                            .stream().map(l -> new LoteReporte(l.getCodigoLote(), l.getCantidadDisponible(),
+                                    l.getPrecioCompra(), l.getFechaCompra(), l.getFechaIngreso(), l.getFechaVencimiento()))
+                            .toList();
+            if (lotes.isEmpty()) {
+                lotes = List.of(new LoteReporte(med.getLote(),
+                        med.getCantidadDisponible() == null ? 0 : med.getCantidadDisponible(),
+                        med.getPrecioCompra(), med.getFechaCompra(), med.getFechaIngresoInventario(), med.getFechaVence()));
+            }
+            int stockTotal = lotes.stream().mapToInt(LoteReporte::cantidad).sum();
             int minimo = med.getStockMinimo() != null ? med.getStockMinimo() : 0;
-            BigDecimal costoUnit = nvl(med.getPrecioCompra());
             BigDecimal ventaUnit = nvl(med.getPrecioVenta());
 
-            BigDecimal costoItem = costoUnit.multiply(BigDecimal.valueOf(stock)).setScale(2, RoundingMode.HALF_UP);
-            BigDecimal ventaItem = ventaUnit.multiply(BigDecimal.valueOf(stock)).setScale(2, RoundingMode.HALF_UP);
-            BigDecimal margenItem = ventaItem.subtract(costoItem).setScale(2, RoundingMode.HALF_UP);
+            boolean tieneVencidos = lotes.stream().anyMatch(l -> l.cantidad() > 0
+                    && l.fechaVencimiento() != null && l.fechaVencimiento().isBefore(hoy));
+            boolean tieneProximosVencer = lotes.stream().anyMatch(l -> l.cantidad() > 0
+                    && l.fechaVencimiento() != null && !l.fechaVencimiento().isBefore(hoy)
+                    && !l.fechaVencimiento().isAfter(fechaLimiteProximo));
+            boolean estaAgotado = stockTotal <= 0;
+            boolean enStockMinimo = stockTotal > 0 && stockTotal <= minimo;
 
-            totalUnidades += stock;
-            valorCostoTotal = valorCostoTotal.add(costoItem);
-            valorVentaTotal = valorVentaTotal.add(ventaItem);
-
-            boolean estaVencido = med.getFechaVence() != null && med.getFechaVence().isBefore(hoy);
-            boolean proximoVencer = med.getFechaVence() != null
-                    && !med.getFechaVence().isBefore(hoy)
-                    && !med.getFechaVence().isAfter(fechaLimiteProximo);
-            boolean estaAgotado = stock <= 0;
-            boolean enStockMinimo = stock > 0 && stock <= minimo;
-
-            if (estaVencido) {
+            if (tieneVencidos) {
                 rs.getMedicamentosVencidos().add(med);
-            } else if (proximoVencer) {
+            }
+            if (tieneProximosVencer) {
                 rs.getMedicamentosProximosVencer().add(med);
             }
 
@@ -341,43 +351,47 @@ public class ReporteServiceImpl implements ReporteService {
                 rs.getMedicamentosStockMinimo().add(med);
             }
 
-            String estadoAlerta = "NORMAL";
-            if (estaVencido) {
-                estadoAlerta = "VENCIDO";
-            } else if (estaAgotado) {
-                estadoAlerta = "AGOTADO";
-            } else if (enStockMinimo) {
-                estadoAlerta = "STOCK_MINIMO";
-            } else if (proximoVencer) {
-                estadoAlerta = "PROXIMO_VENCER";
+            for (LoteReporte lote : lotes) {
+                int stock = lote.cantidad();
+                BigDecimal costoUnit = nvl(lote.precioCompra());
+                BigDecimal costoItem = costoUnit.multiply(BigDecimal.valueOf(stock)).setScale(2, RoundingMode.HALF_UP);
+                BigDecimal ventaItem = ventaUnit.multiply(BigDecimal.valueOf(stock)).setScale(2, RoundingMode.HALF_UP);
+                BigDecimal margenItem = ventaItem.subtract(costoItem).setScale(2, RoundingMode.HALF_UP);
+                totalUnidades += stock;
+                valorCostoTotal = valorCostoTotal.add(costoItem);
+                valorVentaTotal = valorVentaTotal.add(ventaItem);
+
+                LocalDate fechaVencimiento = lote.fechaVencimiento();
+                boolean loteVencido = stock > 0 && fechaVencimiento != null && fechaVencimiento.isBefore(hoy);
+                boolean loteProximoVencer = stock > 0 && fechaVencimiento != null
+                        && !fechaVencimiento.isBefore(hoy) && !fechaVencimiento.isAfter(fechaLimiteProximo);
+                String estadoAlerta = loteVencido ? "VENCIDO"
+                        : estaAgotado ? "AGOTADO"
+                        : enStockMinimo ? "STOCK_MINIMO"
+                        : loteProximoVencer ? "PROXIMO_VENCER" : "NORMAL";
+                ItemExistenciaValorizada item = new ItemExistenciaValorizada();
+                item.setMedicamentoId(med.getId());
+                item.setCodigo(med.getCodigo());
+                item.setNombre(med.getNombre());
+                item.setPresentacion(med.getPresentacion());
+                item.setLote(lote.codigo());
+                item.setRegistroInvima(med.getRegistroInvima());
+                item.setRequiereRegistroInvima(med.getRequiereRegistroInvima());
+                item.setFechaCompra(lote.fechaCompra());
+                item.setFechaIngresoInventario(lote.fechaIngreso());
+                item.setFechaVence(fechaVencimiento);
+                item.setDiasParaVencer(fechaVencimiento == null ? 0 : ChronoUnit.DAYS.between(hoy, fechaVencimiento));
+                item.setCantidadDisponible(stock);
+                item.setStockMinimo(minimo);
+                item.setPrecioCompra(scale(costoUnit));
+                item.setPrecioVenta(scale(ventaUnit));
+                item.setValorCostoTotal(costoItem);
+                item.setValorVentaTotal(ventaItem);
+                item.setMargenPotencial(margenItem);
+                item.setEstadoAlerta(estadoAlerta);
+                item.setActivo(med.getActivo());
+                rs.getExistenciasActuales().add(item);
             }
-
-            long diasRestantes = med.getFechaVence() != null
-                    ? ChronoUnit.DAYS.between(hoy, med.getFechaVence())
-                    : 0;
-
-            ItemExistenciaValorizada item = new ItemExistenciaValorizada();
-            item.setMedicamentoId(med.getId());
-            item.setCodigo(med.getCodigo());
-            item.setNombre(med.getNombre());
-            item.setPresentacion(med.getPresentacion());
-            item.setLote(med.getLote());
-            item.setRegistroInvima(med.getRegistroInvima());
-            item.setRequiereRegistroInvima(med.getRequiereRegistroInvima());
-            item.setFechaCompra(med.getFechaCompra());
-            item.setFechaIngresoInventario(med.getFechaIngresoInventario());
-            item.setFechaVence(med.getFechaVence());
-            item.setDiasParaVencer(diasRestantes);
-            item.setCantidadDisponible(stock);
-            item.setStockMinimo(minimo);
-            item.setPrecioCompra(scale(costoUnit));
-            item.setPrecioVenta(scale(ventaUnit));
-            item.setValorCostoTotal(costoItem);
-            item.setValorVentaTotal(ventaItem);
-            item.setMargenPotencial(margenItem);
-            item.setEstadoAlerta(estadoAlerta);
-            item.setActivo(med.getActivo());
-            rs.getExistenciasActuales().add(item);
         }
 
         rs.setTotalUnidadesExistencia(totalUnidades);
@@ -415,7 +429,7 @@ public class ReporteServiceImpl implements ReporteService {
             k.setCodigoMedicamento(med != null ? med.getCodigo() : "-");
             k.setNombreMedicamento(med != null ? med.getNombre() : "Medicamento #" + mov.getMedicamentoId());
             k.setPresentacion(med != null ? med.getPresentacion() : "-");
-            k.setLote(med != null ? med.getLote() : "-");
+            k.setLote(mov.getCodigoLote() != null ? mov.getCodigoLote() : med != null ? med.getLote() : "-");
             k.setTipo(mov.getTipo() != null ? mov.getTipo().toUpperCase() : "SALIDA");
             k.setCantidad(mov.getCantidad() != null ? mov.getCantidad() : 0);
             k.setMotivo(mov.getMotivo());
@@ -1648,4 +1662,7 @@ public class ReporteServiceImpl implements ReporteService {
         c.setPadding(4f);
         return c;
     }
+
+    private record LoteReporte(String codigo, int cantidad, BigDecimal precioCompra,
+                               LocalDate fechaCompra, LocalDate fechaIngreso, LocalDate fechaVencimiento) {}
 }
