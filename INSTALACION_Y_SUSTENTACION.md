@@ -23,6 +23,7 @@ El archivo Compose está en la raíz de `backend-83680/` para que quede versiona
 La interfaz queda en `http://localhost:8088` y la API en `http://localhost:8080/clinica/v1`.
 Nginx sirve Angular, conserva las rutas de la aplicación y reenvía `/clinica/v1` al backend.
 MySQL utiliza el volumen `mysql_data`, por lo que los datos sobreviven al reinicio de los contenedores.
+En el primer inicio, el backend carga propietarios, mascotas, médico, citas, medicamentos y lotes ficticios de demostración desde `src/main/resources/data.sql`. La carga es idempotente: reiniciar no duplica esos registros ni borra datos existentes.
 
 Comandos útiles:
 

@@ -27,6 +27,8 @@ services:
       SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/Veterinaria?zeroDateTimeBehavior=convertToNull&serverTimezone=America/Bogota&useSSL=false&allowPublicKeyRetrieval=true
       SPRING_DATASOURCE_USERNAME: ${DB_USER:-clinica}
       SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:?Define DB_PASSWORD en .env}
+      SPRING_SQL_INIT_MODE: always
+      SPRING_JPA_DEFER_DATASOURCE_INITIALIZATION: "true"
       JWT_SECRET: ${JWT_SECRET:?Define JWT_SECRET en .env (mínimo 32 caracteres)}
       JWT_EXPIRATION_MS: ${JWT_EXPIRATION_MS:-28800000}
       ADMIN_USERNAME: ${ADMIN_USERNAME:?Define ADMIN_USERNAME en .env}

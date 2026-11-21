@@ -25,6 +25,8 @@ Requisitos: Docker Desktop con Compose habilitado.
    - Swagger UI: <http://localhost:8080/clinica/v1/swagger-ui/index.html>
    - OpenAPI JSON: <http://localhost:8080/clinica/v1/v3/api-docs>
 
+Al primer inicio, Compose crea la base vacía y el backend agrega datos ficticios de demostración (propietarios, mascotas, médico, citas, medicamentos y lotes). La carga está en `src/main/resources/data.sql`, se ejecuta después de que Hibernate prepara las tablas y evita insertar de nuevo los registros demo en cada reinicio. No borra ni reinicia datos existentes.
+
 El usuario inicial se crea desde `ADMIN_USERNAME` y `ADMIN_PASSWORD` solo si aún no existe. El bootstrap no reemplaza contraseñas de usuarios existentes. Desde el usuario administrador se crean propietarios, veterinarios y cuentas con sus perfiles correspondientes. No hay credenciales de demostración compartidas en el repositorio.
 
 Para detener los servicios conserva los datos de MySQL:
