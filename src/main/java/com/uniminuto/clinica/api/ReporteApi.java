@@ -24,7 +24,8 @@ public interface ReporteApi {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaInicial,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaFinal,
             @RequestParam(required = false) Long medicoId,
-            @RequestParam(required = false) Long especializacionId);
+            @RequestParam(required = false) Long especializacionId,
+            @RequestParam(required = false) String rol);
 
     /**
      * Genera el reporte de inventario, valoración costo vs venta, alertas de stock/vencimiento y Kardex (Sección 4.2).
@@ -34,7 +35,8 @@ public interface ReporteApi {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaInicial,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaFinal,
             @RequestParam(required = false) Long medicamentoId,
-            @RequestParam(required = false) Integer diasProximoVencer);
+            @RequestParam(required = false) Integer diasProximoVencer,
+            @RequestParam(required = false) String rol);
 
     /**
      * Genera el reporte de gestión médica: citas por estado, consultas por veterinario/especialidad y mascotas atendidas (Sección 4.3).
@@ -44,5 +46,36 @@ public interface ReporteApi {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaInicial,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaFinal,
             @RequestParam(required = false) Long medicoId,
-            @RequestParam(required = false) Long especializacionId);
+            @RequestParam(required = false) Long especializacionId,
+            @RequestParam(required = false) String rol);
+
+    /**
+     * Exporta en formato Excel (.xlsx) cualquiera de los reportes del Requisito 4 con encabezados institucionales, fecha de generación y totales (Sección 4.4).
+     */
+    @GetMapping(value = "/exportar-excel", produces = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+    ResponseEntity<byte[]> exportarReporteExcel(
+            @RequestParam String tipoReporte,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaInicial,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaFinal,
+            @RequestParam(required = false) Long medicoId,
+            @RequestParam(required = false) Long especializacionId,
+            @RequestParam(required = false) Long medicamentoId,
+            @RequestParam(required = false) Integer diasProximoVencer,
+            @RequestParam(required = false) String agrupacion,
+            @RequestParam(required = false) String rol);
+
+    /**
+     * Exporta en formato PDF (.pdf) cualquiera de los reportes del Requisito 4 con encabezados institucionales, fecha de generación y totales (Sección 4.4).
+     */
+    @GetMapping(value = "/exportar-pdf", produces = "application/pdf")
+    ResponseEntity<byte[]> exportarReportePdf(
+            @RequestParam String tipoReporte,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaInicial,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaFinal,
+            @RequestParam(required = false) Long medicoId,
+            @RequestParam(required = false) Long especializacionId,
+            @RequestParam(required = false) Long medicamentoId,
+            @RequestParam(required = false) Integer diasProximoVencer,
+            @RequestParam(required = false) String agrupacion,
+            @RequestParam(required = false) String rol);
 }

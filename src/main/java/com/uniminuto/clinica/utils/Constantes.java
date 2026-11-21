@@ -74,6 +74,17 @@ public final class Constantes {
     public static final List<String> METODOS_PAGO = List.of(
             "EFECTIVO", "TARJETA", "TRANSFERENCIA", "OTRO");
 
+    /** Tipos de reportes administrativos, contables, de inventario y médicos (Requisito 4). */
+    public static final String REPORTE_FINANCIERO = "FINANCIERO";
+    public static final String REPORTE_INVENTARIO = "INVENTARIO";
+    public static final String REPORTE_MEDICO = "MEDICO";
+
+    /** Roles del sistema para control de permisos y exportación (Secciones 4.4 y 5.1). */
+    public static final String ROL_ADMINISTRADOR = "ADMINISTRADOR";
+    public static final String ROL_SECRETARIA = "SECRETARIA";
+    public static final String ROL_VETERINARIO = "VETERINARIO";
+    public static final String ROL_DESPACHO_MEDICO = "DESPACHO_MEDICO";
+
     /** Constructor privado, la clase solo contiene constantes. */
     private Constantes() {
     }

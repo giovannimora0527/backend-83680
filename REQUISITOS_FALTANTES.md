@@ -159,7 +159,7 @@ Este documento organiza los requerimientos del examen que aún no están impleme
 
 ## Requisito 4. Módulo general de reportes administrativos y contables
 
-### Estado: Parcial (Implementados 4.1, 4.2 y 4.3)
+### Estado: Completado
 
 #### 4.1 Reportes financieros
 - [x] Ingresos por período
@@ -196,13 +196,13 @@ Este documento organiza los requerimientos del examen que aún no están impleme
 - [x] Mascotas atendidas por período
 
 #### 4.4 Exportación de información
-- [ ] Seleccionar rango de fechas
-- [ ] Aplicar filtros por tipo de reporte
-- [ ] Ver resultados antes de exportar
-- [ ] Descargar resultados en PDF
-- [ ] Descargar resultados en Excel
-- [ ] Incluir encabezados, fecha de generación y totales
-- [ ] Restringir acceso según permisos del usuario
+- [x] Seleccionar rango de fechas
+- [x] Aplicar filtros por tipo de reporte
+- [x] Ver resultados antes de exportar
+- [x] Descargar resultados en PDF
+- [x] Descargar resultados en Excel
+- [x] Incluir encabezados, fecha de generación y totales
+- [x] Restringir acceso según permisos del usuario
 
 ---
 
