@@ -26,4 +26,20 @@ public interface HistoriaMedicaRepository extends JpaRepository<HistoriaMedica, 
      * @return true si ya existe.
      */
     boolean existsByCitaId(Long citaId);
+
+    /**
+     * Historias de una mascota (antecedentes), de la mas reciente a la mas antigua.
+     *
+     * @param mascotaId id de la mascota.
+     * @return historias.
+     */
+    List<HistoriaMedica> findByMascotaMascotaIdOrderByFechaHoraDesc(Integer mascotaId);
+
+    /**
+     * Historia de una cita.
+     *
+     * @param citaId id de la cita.
+     * @return historias (maximo una).
+     */
+    List<HistoriaMedica> findByCitaId(Long citaId);
 }

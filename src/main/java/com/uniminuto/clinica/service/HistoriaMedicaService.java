@@ -33,4 +33,12 @@ public interface HistoriaMedicaService {
      * @return respuesta de éxito.
      */
     MiRespuestaRS guardarHistoria(HistoriaMedicaRq historiaRq);
+
+    /**
+     * Convierte una historia al objeto de respuesta.
+     *
+     * @param historia entidad.
+     * @return respuesta.
+     */
+    HistoriaMedicaRs convertirHistoria(com.uniminuto.clinica.entity.HistoriaMedica historia);
 }

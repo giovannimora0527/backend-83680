@@ -1,6 +1,7 @@
 package com.uniminuto.clinica.service;
 
 import com.uniminuto.clinica.entity.Especializacion;
+import com.uniminuto.clinica.models.MiRespuestaRS;
 
 import java.util.List;
 
@@ -9,10 +10,15 @@ import java.util.List;
  */
 public interface EspecializacionService {
 
-    /**
-     * Lista las especializaciones ordenadas por nombre.
-     *
-     * @return lista de especializaciones.
-     */
+    /** @return especialidades ordenadas por nombre. */
     List<Especializacion> listarEspecializaciones();
+
+    /** @return respuesta al registrar. */
+    MiRespuestaRS guardarEspecializacion(Especializacion especializacion);
+
+    /** @return respuesta al editar. */
+    MiRespuestaRS actualizarEspecializacion(Especializacion especializacion);
+
+    /** @return respuesta al activar o inactivar. */
+    MiRespuestaRS cambiarEstado(Long id, Boolean activo);
 }

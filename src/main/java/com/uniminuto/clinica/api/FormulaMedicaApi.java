@@ -1,73 +1,37 @@
 package com.uniminuto.clinica.api;
 
-import com.uniminuto.clinica.models.FormulaMedicaRq;
 import com.uniminuto.clinica.models.FormulaMedicaRs;
 import com.uniminuto.clinica.models.MiRespuestaRS;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
 
 /**
- * Contrato de los servicios web de las fórmulas médicas.
+ * Rutas de consulta de fórmulas médicas (se crean desde la atención de la cita).
  */
-@CrossOrigin(origins = "*", allowedHeaders = "*")
+@Tag(name = "Fórmulas médicas", description = "Consulta, inactivación y PDF de fórmulas")
 @RequestMapping("/formula-medica")
 public interface FormulaMedicaApi {
 
-    /**
-     * Lista las fórmulas médicas ordenadas por fecha de creación,
-     * de la más reciente a la más antigua.
-     *
-     * @return las fórmulas médicas registradas.
-     */
+    @Operation(summary = "Listar fórmulas (el médico ve solo las suyas)")
     @GetMapping(value = "/listar", produces = {"application/json"})
     ResponseEntity<List<FormulaMedicaRs>> listarFormulasMedicas();
 
-    /**
-     * Consulta el detalle de una fórmula.
-     *
-     * @param formulaId id de la fórmula.
-     * @return la fórmula.
-     */
+    @Operation(summary = "Detalle de una fórmula con medicamentos y disponibilidad")
     @GetMapping(value = "/consultar", produces = {"application/json"})
     ResponseEntity<FormulaMedicaRs> consultarFormula(@RequestParam Long formulaId);
 
-    /**
-     * Crea una fórmula médica.
-     *
-     * @param formulaRq datos de la fórmula.
-     * @return respuesta de éxito.
-     */
-    @PostMapping(value = "/guardar",
-            produces = {"application/json"},
-            consumes = {"application/json"})
-    ResponseEntity<MiRespuestaRS> guardarFormula(@RequestBody FormulaMedicaRq formulaRq);
-
-    /**
-     * Edita una fórmula (solo medicamento, dosis, frecuencia, duración, indicaciones y fecha).
-     *
-     * @param formulaRq datos de la fórmula con su id.
-     * @return respuesta de éxito.
-     */
-    @PutMapping(value = "/actualizar",
-            produces = {"application/json"},
-            consumes = {"application/json"})
-    ResponseEntity<MiRespuestaRS> actualizarFormula(@RequestBody FormulaMedicaRq formulaRq);
-
-    /**
-     * Inactiva una fórmula. No se borra físicamente porque es información clínica.
-     *
-     * @param formulaId id de la fórmula.
-     * @return respuesta de éxito.
-     */
+    @Operation(summary = "Inactivar fórmula (no se borra; solo si no se ha despachado)")
     @PatchMapping(value = "/inactivar", produces = {"application/json"})
     ResponseEntity<MiRespuestaRS> inactivarFormula(@RequestParam Long formulaId);
+
+    @Operation(summary = "Fórmula médica en PDF")
+    @GetMapping(value = "/pdf")
+    ResponseEntity<byte[]> formulaPdf(@RequestParam Long formulaId);
 }

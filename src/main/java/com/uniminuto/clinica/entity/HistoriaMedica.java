@@ -61,4 +61,17 @@ public class HistoriaMedica {
     /** Fecha en que se creo el registro. */
     @Column(name = "fecha_creacion")
     private LocalDateTime fechaCreacion;
+
+    /** Sintomas identificados. */
+    @Column(name = "sintomas", columnDefinition = "TEXT")
+    private String sintomas;
+
+    /** Recomendaciones para el propietario. */
+    @Column(name = "recomendaciones", columnDefinition = "TEXT")
+    private String recomendaciones;
+
+    /** Servicio prestado (tarifa que se cobra). */
+    @ManyToOne
+    @JoinColumn(name = "tarifa_id")
+    private Tarifa tarifa;
 }

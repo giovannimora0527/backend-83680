@@ -125,7 +125,7 @@ public class HistoriaMedicaServiceImpl implements HistoriaMedicaService {
      * @param historia entidad.
      * @return objeto de respuesta.
      */
-    private HistoriaMedicaRs convertirHistoria(HistoriaMedica historia) {
+    public HistoriaMedicaRs convertirHistoria(HistoriaMedica historia) {
         HistoriaMedicaRs rs = new HistoriaMedicaRs();
         rs.setId(historia.getId());
         rs.setMascotaId(historia.getMascota().getMascotaId());
@@ -145,6 +145,11 @@ public class HistoriaMedicaServiceImpl implements HistoriaMedicaService {
         rs.setMotivo(historia.getMotivo());
         rs.setDiagnostico(historia.getDiagnostico());
         rs.setObservaciones(historia.getObservaciones());
+        rs.setSintomas(historia.getSintomas());
+        rs.setRecomendaciones(historia.getRecomendaciones());
+        if (historia.getTarifa() != null) {
+            rs.setServicio(historia.getTarifa().getNombre());
+        }
         return rs;
     }
 

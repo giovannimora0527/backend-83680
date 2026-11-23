@@ -40,13 +40,13 @@ public class FormulaMedica {
      * Medicamento recetado.
      */
     @ManyToOne
-    @JoinColumn(name = "medicamento_id", nullable = false)
+    @JoinColumn(name = "medicamento_id")
     private Medicamento medicamento;
 
     /**
      * Dosis indicada del medicamento.
      */
-    @Column(name = "dosis", nullable = false, columnDefinition = "TEXT")
+    @Column(name = "dosis", columnDefinition = "TEXT")
     private String dosis;
 
     /**
@@ -87,4 +87,13 @@ public class FormulaMedica {
     /** true = vigente, false = inactiva. Las formulas no se borran fisicamente. */
     @Column(name = "activo", nullable = false)
     private Boolean activo;
+
+    /** Historia clinica (atencion) en la que se genero la formula. */
+    @Column(name = "historia_id")
+    private Long historiaId;
+
+    /** Estado del despacho: PENDIENTE_DESPACHO, EN_PREPARACION, DESPACHO_PARCIAL, DESPACHADO,
+     *  PENDIENTE_DISPONIBILIDAD o CANCELADO. */
+    @Column(name = "estado_despacho", nullable = false)
+    private String estadoDespacho = "PENDIENTE_DESPACHO";
 }

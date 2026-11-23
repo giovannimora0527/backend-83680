@@ -4,6 +4,7 @@ import com.uniminuto.clinica.entity.FormulaMedica;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -12,19 +13,15 @@ import java.util.List;
 @Repository
 public interface FormulaMedicaRepository extends JpaRepository<FormulaMedica, Long> {
 
-    /**
-     * Formulas ordenadas por fecha de creacion, de la mas reciente a la mas antigua.
-     *
-     * @return formulas ordenadas.
-     */
+    /** @return formulas de la mas reciente a la mas antigua. */
     List<FormulaMedica> findAllByOrderByFechaCreacionRegistroDesc();
 
-    /**
-     * Revisa si ya hay una formula activa con el mismo medicamento para la misma cita.
-     *
-     * @param citaId        id de la cita.
-     * @param medicamentoId id del medicamento.
-     * @return true si ya existe.
-     */
-    boolean existsByCitaIdAndMedicamentoIdAndActivoTrue(Long citaId, Long medicamentoId);
+    /** @return formulas activas de una cita. */
+    List<FormulaMedica> findByCitaIdAndActivoTrue(Long citaId);
+
+    /** @return formulas activas en ciertos estados de despacho. */
+    List<FormulaMedica> findByActivoTrueAndEstadoDespachoInOrderByFechaCreacionRegistroAsc(Collection<String> estados);
+
+    /** @return formulas de una mascota (por su cita). */
+    List<FormulaMedica> findByCitaMascotaMascotaIdOrderByFechaCreacionRegistroDesc(Integer mascotaId);
 }

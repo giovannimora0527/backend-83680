@@ -35,4 +35,10 @@ public class HistoriaMedicaRs {
     private String observaciones;
     /** Estado de la cita asociada. */
     private String estado;
+    /** Sintomas. */
+    private String sintomas;
+    /** Recomendaciones. */
+    private String recomendaciones;
+    /** Servicio prestado. */
+    private String servicio;
 }

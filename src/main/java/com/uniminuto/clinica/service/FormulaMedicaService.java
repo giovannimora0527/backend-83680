@@ -1,53 +1,35 @@
 package com.uniminuto.clinica.service;
 
-import com.uniminuto.clinica.models.FormulaMedicaRq;
+import com.uniminuto.clinica.entity.FormulaMedica;
 import com.uniminuto.clinica.models.FormulaMedicaRs;
 import com.uniminuto.clinica.models.MiRespuestaRS;
 
 import java.util.List;
 
 /**
- * Servicio con la lógica de negocio de las fórmulas médicas.
+ * Servicio de consulta de fórmulas médicas. Las fórmulas las crea el médico
+ * desde la atención de la cita (AtencionService).
  */
 public interface FormulaMedicaService {
 
-    /**
-     * Lista las fórmulas médicas ordenadas por fecha de creación,
-     * de la más reciente a la más antigua.
-     *
-     * @return las fórmulas médicas registradas.
-     */
+    /** @return fórmulas de la más reciente a la más antigua. */
     List<FormulaMedicaRs> listarFormulasMedicas();
 
-    /**
-     * Consulta una fórmula por su id.
-     *
-     * @param formulaId id de la fórmula.
-     * @return la fórmula.
-     */
+    /** @return detalle de una fórmula con sus medicamentos. */
     FormulaMedicaRs consultarFormula(Long formulaId);
 
     /**
-     * Crea una fórmula validando las reglas de negocio.
+     * Convierte una formula al objeto de respuesta.
      *
-     * @param formulaRq datos de la fórmula.
-     * @return respuesta de éxito.
+     * @param formula entidad.
+     * @param conDetalle si incluye los medicamentos con su disponibilidad.
+     * @return respuesta.
      */
-    MiRespuestaRS guardarFormula(FormulaMedicaRq formulaRq);
+    FormulaMedicaRs convertir(FormulaMedica formula, boolean conDetalle);
 
-    /**
-     * Edita los datos permitidos de una fórmula activa.
-     *
-     * @param formulaRq datos de la fórmula con su id.
-     * @return respuesta de éxito.
-     */
-    MiRespuestaRS actualizarFormula(FormulaMedicaRq formulaRq);
-
-    /**
-     * Inactiva una fórmula (no se borra físicamente).
-     *
-     * @param formulaId id de la fórmula.
-     * @return respuesta de éxito.
-     */
+    /** @return respuesta al inactivar (solo si no se ha despachado nada). */
     MiRespuestaRS inactivarFormula(Long formulaId);
+
+    /** @return PDF de la fórmula. */
+    byte[] formulaPdf(Long formulaId);
 }
