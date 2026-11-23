@@ -7,6 +7,7 @@ import org.apache.poi.ss.usermodel.Font;
 import org.apache.poi.ss.usermodel.IndexedColors;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 import java.io.ByteArrayOutputStream;
@@ -68,6 +69,13 @@ public final class ExcelUtil {
             }
             hoja.createRow(r++).createCell(0).setCellValue("Generado: "
                     + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")));
+            // Las filas del titulo se combinan a lo ancho de la tabla para que el
+            // texto largo no ensanche la primera columna al ajustar los anchos
+            if (columnas.size() > 1) {
+                for (int i = 0; i < r; i++) {
+                    hoja.addMergedRegion(new CellRangeAddress(i, i, 0, columnas.size() - 1));
+                }
+            }
             r++;
 
             Row encabezado = hoja.createRow(r++);

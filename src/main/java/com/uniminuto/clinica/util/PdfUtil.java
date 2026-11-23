@@ -231,7 +231,10 @@ public final class PdfUtil {
 
         private void agregarTexto(Document documento, String subtitulo, String texto) throws DocumentException {
             subtitulo(documento, subtitulo);
-            documento.add(new Paragraph(texto == null || texto.isBlank() ? "-" : texto, NORMAL));
+            Paragraph p = new Paragraph(texto == null || texto.isBlank() ? "-" : texto, NORMAL);
+            // Espacio para que el texto no quede pegado a la tabla que sigue
+            p.setSpacingAfter(8);
+            documento.add(p);
         }
 
         private PdfPCell celda(String texto, Font fuente, Color fondo) {
