@@ -200,20 +200,252 @@ Tu código Java ── llama ──▶ Repository (Spring Data)
 
 ## 5. Modelo de datos y mapeo tabla ↔ entidad
 
-### 5.1 Diagrama de relaciones
+### 5.1 Diagrama entidad-relación (actualizado al examen final)
+
+Imagen del diagrama: [`docs/diagrama_entidad_relacion.svg`](diagrama_entidad_relacion.svg) (se abre en el navegador). El mismo diagrama en Mermaid (GitHub lo dibuja automáticamente):
 
 ```mermaid
 erDiagram
+    PERFIL ||--o{ USUARIO : "asigna rol"
+    PERFIL ||--o{ PERFIL_MENU : "tiene"
+    MENU ||--o{ PERFIL_MENU : "se muestra en"
+    USUARIO ||--o{ SESSION : "abre"
+    USUARIO |o--o| MEDICO : "es"
     CLIENTE ||--o{ MASCOTA : "es dueño de"
     RAZA ||--o{ MASCOTA : "clasifica"
     ESPECIALIZACION ||--o{ MEDICO : "tiene"
+    ESPECIALIZACION |o--o{ TARIFA : "define precio de"
+    TARIFA ||--o{ TARIFA_LOG : "registra cambios"
+    MEDICO ||--o{ HORARIO_MEDICO : "atiende en"
+    ESTADO_CITA ||--o{ CITA : "clasifica"
     CLIENTE ||--o{ CITA : "solicita"
     MASCOTA ||--o{ CITA : "es atendida en"
     MEDICO ||--o{ CITA : "atiende"
-    CITA ||--o{ FORMULA_MEDICA : "genera"
-    MEDICAMENTO ||--o{ FORMULA_MEDICA : "se receta en"
+    CITA ||--o| HISTORIA_MEDICA : "genera"
+    TARIFA |o--o{ HISTORIA_MEDICA : "servicio prestado"
     HISTORIA_MEDICA ||--o{ ANOTACION_HISTORIA : "contiene"
-    MEDICO ||--o{ ANOTACION_HISTORIA : "escribe"
+    CITA ||--o{ FORMULA_MEDICA : "genera"
+    FORMULA_MEDICA ||--|{ FORMULA_DETALLE : "contiene"
+    MEDICAMENTO ||--o{ FORMULA_DETALLE : "se receta en"
+    MEDICAMENTO ||--o{ MEDICAMENTO_LOTE : "tiene lotes"
+    FORMULA_MEDICA ||--o{ DESPACHO : "se entrega en"
+    FORMULA_MEDICA ||--o{ DESPACHO_ESTADO_LOG : "cambia de estado"
+    DESPACHO ||--|{ DESPACHO_DETALLE : "contiene"
+    FORMULA_DETALLE ||--o{ DESPACHO_DETALLE : "se despacha en"
+    MEDICAMENTO_LOTE ||--o{ DESPACHO_DETALLE : "sale de"
+    MEDICAMENTO_LOTE ||--o{ MOVIMIENTO_INVENTARIO : "registra"
+    DESPACHO |o--o{ MOVIMIENTO_INVENTARIO : "origina"
+    USUARIO ||--o{ CARGA_INVENTARIO_LOG : "realiza"
+    CITA ||--o{ FACTURA : "se factura en"
+    FACTURA ||--|{ FACTURA_DETALLE : "contiene"
+    FACTURA ||--o{ PAGO : "recibe"
+    FACTURA ||--o{ FACTURA_LOG : "registra"
+
+    USUARIO {
+        int id PK
+        string username
+        string password_hash
+        int rol FK
+        boolean activo
+    }
+    PERFIL {
+        int perfil_id PK
+        string nombre
+    }
+    MENU {
+        int menu_id PK
+        string code
+        string url
+    }
+    PERFIL_MENU {
+        int perfil_id FK
+        int menu_id FK
+    }
+    SESSION {
+        int session_id PK
+        int user_id FK
+        string token
+        datetime fecha_expiracion
+    }
+    MEDICO {
+        int id PK
+        string nombres
+        int especializacion_id FK
+        int usuario_id FK
+        boolean activo
+    }
+    ESPECIALIZACION {
+        int id PK
+        string codigo_especializacion
+        string nombre
+        boolean activo
+    }
+    HORARIO_MEDICO {
+        bigint id PK
+        int medico_id FK
+        int dia_semana
+        time hora_inicio
+        time hora_fin
+    }
+    CLIENTE {
+        int cliente_id PK
+        string numero_documento
+        string nombres
+        string apellidos
+    }
+    MASCOTA {
+        int mascota_id PK
+        int cliente_id FK
+        int raza_id FK
+        string nombre_mascota
+    }
+    RAZA {
+        int raza_id PK
+        string nombre
+        string especie
+    }
+    ESTADO_CITA {
+        string codigo PK
+        string nombre
+    }
+    CITA {
+        bigint id PK
+        int cliente_id FK
+        int mascota_id FK
+        int medico_id FK
+        datetime fecha_hora
+        datetime fecha_hora_fin
+        string estado FK
+    }
+    TARIFA {
+        bigint id PK
+        string codigo
+        string tipo
+        int especializacion_id FK
+        decimal valor
+        decimal iva_porcentaje
+    }
+    TARIFA_LOG {
+        bigint id PK
+        bigint tarifa_id FK
+        decimal valor_anterior
+        decimal valor_nuevo
+        int usuario_id FK
+    }
+    HISTORIA_MEDICA {
+        int id PK
+        bigint cita_id FK
+        int paciente_id
+        bigint tarifa_id FK
+        text sintomas
+        text diagnostico
+    }
+    ANOTACION_HISTORIA {
+        int id PK
+        int historia_id FK
+        int medico_id FK
+        text descripcion
+    }
+    FORMULA_MEDICA {
+        bigint id PK
+        bigint cita_id FK
+        int historia_id
+        string estado_despacho
+        boolean activo
+    }
+    FORMULA_DETALLE {
+        bigint id PK
+        bigint formula_id FK
+        bigint medicamento_id FK
+        string dosis
+        string via_administracion
+        int cantidad
+        int cantidad_entregada
+    }
+    MEDICAMENTO {
+        bigint id PK
+        char codigo
+        string tipo
+        string registro_invima
+        decimal precio_venta
+        int stock_minimo
+    }
+    MEDICAMENTO_LOTE {
+        bigint id PK
+        bigint medicamento_id FK
+        string numero_lote
+        decimal precio_compra
+        date fecha_vence
+        int cantidad_disponible
+    }
+    MOVIMIENTO_INVENTARIO {
+        bigint id PK
+        bigint medicamento_id FK
+        bigint lote_id FK
+        string tipo
+        int cantidad
+        bigint formula_id FK
+        bigint despacho_id FK
+        int usuario_id FK
+    }
+    CARGA_INVENTARIO_LOG {
+        bigint id PK
+        string nombre_archivo
+        int filas_ok
+        int filas_error
+        int usuario_id FK
+    }
+    DESPACHO {
+        bigint id PK
+        bigint formula_id FK
+        string estado
+        int usuario_id FK
+        int usuario_reversion_id FK
+    }
+    DESPACHO_DETALLE {
+        bigint id PK
+        bigint despacho_id FK
+        bigint formula_detalle_id FK
+        bigint lote_id FK
+        int cantidad
+    }
+    DESPACHO_ESTADO_LOG {
+        bigint id PK
+        bigint formula_id FK
+        string estado_anterior
+        string estado_nuevo
+        int usuario_id FK
+    }
+    FACTURA {
+        bigint id PK
+        string numero
+        bigint cita_id FK
+        decimal total
+        string estado
+        int usuario_id FK
+    }
+    FACTURA_DETALLE {
+        bigint id PK
+        bigint factura_id FK
+        string descripcion
+        int cantidad
+        decimal precio_unitario
+        decimal iva_valor
+    }
+    PAGO {
+        bigint id PK
+        bigint factura_id FK
+        decimal valor
+        string metodo
+        string referencia
+        int usuario_id FK
+    }
+    FACTURA_LOG {
+        bigint id PK
+        bigint factura_id FK
+        string accion
+        int usuario_id FK
+    }
 ```
 
 ### 5.2 Tablas del parcial (columna por columna)
@@ -260,9 +492,11 @@ public class Cita {
 
 Con `@ManyToOne`, Hibernate carga el **objeto** relacionado (`cita.getCliente().getNombres()`) haciendo la consulta necesaria por sí mismo. Con `@GeneratedValue(IDENTITY)`, al hacer `save()` de un objeto nuevo Hibernate omite el `id` en el `INSERT` y luego lee el que asignó MySQL.
 
-### 5.4 Importante: la BD no tiene claves foráneas
+### 5.4 Claves foráneas
 
-Al inspeccionar el esquema se comprobó que **ninguna tabla declara `FOREIGN KEY`**. Las relaciones existen solo en la lógica de la aplicación. Consecuencia: **MySQL no impide** guardar una cita con un `cliente_id` inexistente. Por eso los servicios buscan cada entidad con `findById` **antes** de guardar y lanzan un error si no existe: esa es la garantía de integridad.
+Las tablas **originales** del proyecto (cliente, mascota, cita, historia, etc.) no declaraban `FOREIGN KEY`; por eso los servicios buscan cada entidad con `findById` **antes** de guardar y lanzan un error si no existe.
+
+Las tablas **nuevas del examen final sí tienen claves foráneas** en MySQL (ver sección 16.1.1), así que la base de datos misma impide, por ejemplo, un movimiento de inventario con un lote inexistente.
 
 ---
 
@@ -699,6 +933,53 @@ Scripts (se ejecutan en este orden sobre la base `clinica`):
 | `factura`, `factura_detalle`, `pago`, `factura_log` | Facturas con valores históricos, pagos y trazabilidad |
 
 A diferencia de las tablas antiguas, las tablas nuevas **sí tienen claves foráneas**.
+
+#### 16.1.1 Relaciones, restricciones y justificación
+
+El diagrama completo está en la sección 5.1 y en `docs/diagrama_entidad_relacion.svg`.
+
+**Claves foráneas principales**
+
+| Tabla | Columna → tabla referenciada |
+|---|---|
+| `usuario` | `rol` → `perfil` |
+| `perfil_menu` | `perfil_id` → `perfil`, `menu_id` → `menu` |
+| `medico` | `usuario_id` → `usuario` |
+| `horario_medico` | `medico_id` → `medico` |
+| `cita` | `estado` → `estado_cita` |
+| `tarifa` / `tarifa_log` | `especializacion_id` → `especializacion` / `tarifa_id` → `tarifa`, `usuario_id` → `usuario` |
+| `historia_medica` | `tarifa_id` → `tarifa` |
+| `formula_detalle` | `formula_id` → `formula_medica`, `medicamento_id` → `medicamento` |
+| `medicamento_lote` | `medicamento_id` → `medicamento` |
+| `despacho` | `formula_id` → `formula_medica`, `usuario_id` y `usuario_reversion_id` → `usuario` |
+| `despacho_detalle` | `despacho_id` → `despacho`, `formula_detalle_id` → `formula_detalle`, `lote_id` → `medicamento_lote` |
+| `despacho_estado_log` | `formula_id` → `formula_medica`, `usuario_id` → `usuario` |
+| `movimiento_inventario` | `medicamento_id`, `lote_id`, `formula_id`, `despacho_id`, `usuario_id` |
+| `carga_inventario_log` | `usuario_id` → `usuario` |
+| `factura` | `cita_id`, `cliente_id`, `mascota_id`, `medico_id`, `usuario_id` |
+| `factura_detalle` / `pago` / `factura_log` | `factura_id` → `factura` (y `usuario_id` en pago y log) |
+
+**Restricciones (UNIQUE y CHECK)**
+
+- Únicos: código de medicamento (`uk_medicamento_codigo`), número de lote por medicamento (`uk_lote`), código de tarifa, número de factura, un usuario por médico (`uk_medico_usuario`) y la pareja perfil-menú.
+- Horarios: día entre 1 y 7 y hora de inicio menor que la de fin.
+- Tarifas: valor ≥ 0 e IVA entre 0 y 100. Medicamentos: precio de venta y stock mínimo ≥ 0.
+- Lotes: la cantidad disponible nunca es negativa ni mayor que la inicial (así el inventario **no puede quedar negativo** ni desde la base de datos).
+- Fórmula: cantidad > 0 y lo entregado entre 0 y lo prescrito. Despacho, movimientos y pagos: cantidad o valor > 0. Factura: subtotal, IVA, descuento y totales ≥ 0.
+
+**Justificación de los cambios**
+
+| Cambio | Por qué |
+|---|---|
+| `medicamento` ampliado + `medicamento_lote` | Un mismo medicamento puede tener varios lotes con distinto precio de compra y vencimiento; el stock es la suma de lotes vigentes, y así se puede aplicar FEFO. |
+| `movimiento_inventario` | Trazabilidad: cada entrada o salida queda con fecha, usuario, lote y fórmula. Las cantidades no se editan a mano. |
+| `carga_inventario_log` | El examen pide registrar fecha, usuario y resultado de cada carga masiva. |
+| `formula_detalle` | Una fórmula ahora tiene varios medicamentos con dosis, vía y cantidad. Separa **formular** (médico) de **dispensar** (despacho). |
+| `despacho`, `despacho_detalle`, `despacho_estado_log` | Registrar qué se entregó, de qué lote, quién lo hizo, entregas parciales, reversiones y el historial de estados. |
+| `horario_medico`, `estado_cita`, `cita.fecha_hora_fin` | Validar disponibilidad del médico y superposición de citas con inicio y fin reales; estados como catálogo. |
+| `tarifa`, `tarifa_log` | Precios configurables sin tocar código, con IVA y con historial de cambios. |
+| `factura`, `factura_detalle`, `pago`, `factura_log` | La factura guarda los valores del momento (históricos), admite pagos parciales y la anulación no borra nada. |
+| `perfil`, `menu`, `perfil_menu`, `usuario.rol` como FK | Control de acceso por perfil (incluido DESPACHO_MEDICO) validado en el backend y menú dinámico en el frontend. |
 
 ### 16.2 Seguridad y perfiles
 - `POST /auth/login` valida usuario y contraseña (MD5) y devuelve un **token** (UUID) guardado en la tabla `session`, junto con los menús del perfil.
