@@ -1,0 +1,49 @@
+# Levanta la clinica completa: base de datos, backend y frontend.
+# Requiere que los dos repositorios esten en la misma carpeta:
+#   carpeta/backend-83680   (este repositorio)
+#   carpeta/frontend26-83680
+# Uso: docker compose up --build
+#   Frontend: http://localhost:4200
+#   Swagger:  http://localhost:8080/clinica/v1/swagger-ui/index.html
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: clinica-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: clinica
+      TZ: America/Bogota
+    ports:
+      - "3307:3306"
+    volumes:
+      # Al crear el contenedor por primera vez se ejecutan los .sql de esta carpeta
+      - ./docker/mysql:/docker-entrypoint-initdb.d
+      - clinica-datos:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-pclinica"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build: .
+    container_name: clinica-backend
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/clinica?serverTimezone=America/Bogota&useSSL=false&allowPublicKeyRetrieval=true&zeroDateTimeBehavior=round
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: clinica
+    ports:
+      - "8080:8080"
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+  frontend:
+    build: ../frontend26-83680
+    container_name: clinica-frontend
+    ports:
+      - "4200:80"
+    depends_on:
+      - backend
+
+volumes:
+  clinica-datos:
