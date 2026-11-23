@@ -19,6 +19,8 @@ Este documento explica **cómo está construido por dentro** y **cómo se comuni
 13. [Limitaciones conocidas y mejoras](#13-limitaciones-conocidas-y-mejoras)
 14. [Preguntas probables en la sustentación](#14-preguntas-probables-en-la-sustentación)
 15. [Cómo ejecutar y probar](#15-cómo-ejecutar-y-probar)
+16. [Examen final](#16-examen-final)
+17. [Docker y usuarios de prueba](#17-docker-y-usuarios-de-prueba)
 
 ---
 
@@ -36,7 +38,10 @@ Este documento explica **cómo está construido por dentro** y **cómo se comuni
 | JSON | Jackson 3 | Convierte JSON ↔ objetos Java |
 | Utilidad | Lombok | Genera getters y setters en compilación |
 | Build | Maven (`mvnw`) | Compila, prueba y empaqueta el `.jar` |
-| Front | HTML + CSS + JavaScript puro | Panel web que consume la API |
+| Documentos | Apache POI 5.3 / OpenPDF 2.0 | Excel (.xlsx) y PDF (facturas, fórmulas, reportes) |
+| Documentación API | springdoc-openapi 3.0 (Swagger UI) | Prueba de los endpoints desde el navegador |
+| Front | Angular 19 + Bootstrap 5 + FullCalendar 6 | Aplicación web que consume la API (repositorio `frontend26-83680`) |
+| Contenedores | Docker + Docker Compose | Levantar base de datos, backend y frontend con un comando |
 
 ---
 
@@ -667,3 +672,176 @@ Script: `docs/script_parcial2.sql` (solo agrega columnas).
 - Los errores salen como `BadRequestException` con mensajes claros; el error 500 ya no muestra el mensaje técnico.
 - En el front, los listados se filtran, ordenan y paginan en el navegador (igual que en Mascotas), y la paginación es un componente reutilizable (`shared/paginacion`).
 - Combos dependientes: Cliente → Mascotas del cliente → Citas de la mascota.
+
+---
+
+## 16. Examen final
+
+### 16.1 Cambios en la base de datos
+Scripts (se ejecutan en este orden sobre la base `clinica`):
+1. `docs/script_parcial2.sql`: cambios del segundo parcial.
+2. `docs/script_examen_final.sql`: estructura nueva del examen final.
+3. `docs/script_examen_final_datos.sql`: productos, lotes y una cita de ejemplo para probar.
+
+| Tabla | Para qué |
+|---|---|
+| `perfil`, `menu`, `perfil_menu` | Perfiles (Administrador, Recepción, Médico, DESPACHO_MEDICO) y el menú que ve cada uno |
+| `usuario`, `session`, `otp_token` | Usuarios (contraseña en MD5), sesiones con token y códigos OTP |
+| `horario_medico` | Franjas de atención de cada médico por día de la semana |
+| `estado_cita` | Catálogo de estados de la cita (FK desde `cita.estado`) |
+| `tarifa`, `tarifa_log` | Servicios con valor e IVA, y el historial de cada cambio |
+| `medicamento` (ampliada) | Código de 8 caracteres, tipo, registro Invima, precio de venta, IVA, stock mínimo, próximo pedido |
+| `medicamento_lote` | Lotes con cantidad inicial y disponible, precio de compra y vencimiento |
+| `movimiento_inventario` | Entradas, cargas masivas, salidas y reversiones (con el saldo del lote) |
+| `carga_inventario_log` | Log de cada carga masiva (archivo, filas, errores, usuario) |
+| `formula_detalle` | Varios medicamentos por fórmula (dosis, frecuencia, días, vía, cantidad, entregado) |
+| `despacho`, `despacho_detalle`, `despacho_estado_log` | Entregas por lote y el historial de estados de la fórmula |
+| `factura`, `factura_detalle`, `pago`, `factura_log` | Facturas con valores históricos, pagos y trazabilidad |
+
+A diferencia de las tablas antiguas, las tablas nuevas **sí tienen claves foráneas**.
+
+### 16.2 Seguridad y perfiles
+- `POST /auth/login` valida usuario y contraseña (MD5) y devuelve un **token** (UUID) guardado en la tabla `session`, junto con los menús del perfil.
+- El front envía `Authorization: Bearer <token>` en cada petición.
+- `security/AuthInterceptor` revisa el token en cada petición: sin token o con token vencido responde **401**; si el perfil no tiene permiso para la ruta responde **403**. Las reglas por ruta, método y perfil están en `security/Permisos`.
+- El menú lateral se arma con la tabla `perfil_menu`, y el `authGuard` de Angular no deja entrar a rutas cuyo menú no tenga el perfil.
+
+| Perfil | Menús |
+|---|---|
+| Administrador | Citas, clientes, especializaciones, mascotas, medicamentos, médicos, usuarios, tarifas, facturación, reportes, despacho (consulta y reversión) |
+| Recepción | Citas, clientes, mascotas, facturación |
+| Médico | Mi agenda, historias, fórmulas (solo las suyas) |
+| DESPACHO_MEDICO | Medicamentos (consulta), despacho |
+
+### 16.3 Endpoints nuevos
+Todos van bajo `http://localhost:8080/clinica/v1`. La lista completa, con los cuerpos de ejemplo, está en Swagger.
+
+| Módulo | Rutas |
+|---|---|
+| Autenticación | `POST /auth/login`, `GET /auth/me`, `POST /auth/logout` |
+| Usuarios | `GET /usuario/listar`, `GET /usuario/perfiles`, `POST /usuario/guardar`, `PUT /usuario/actualizar` |
+| Medicamentos | `GET /medicamento/listar`, `GET /medicamento/inventario`, `GET /medicamento/consultar`, `GET /medicamento/movimientos`, `POST /medicamento/guardar`, `PUT /medicamento/actualizar` |
+| Inventario | `POST /inventario/lote`, `POST /inventario/carga/previsualizar`, `POST /inventario/carga/confirmar`, `GET /inventario/carga/logs`, `GET /inventario/carga/plantilla` |
+| Agenda (médico) | `GET /agenda/citas?desde&hasta`, `GET/POST/PUT /agenda/cita`, `PUT /agenda/reprogramar`, `PUT /agenda/estado`, `GET /agenda/historial-mascota`, `GET /agenda/horarios`, `GET /agenda/reporte-excel` |
+| Horarios | `GET /medico/horarios`, `PUT /medico/horarios` |
+| Especialidades | `GET /especializacion/listar`, `POST /especializacion/guardar`, `PUT /especializacion/actualizar`, `PATCH /especializacion/estado` |
+| Tarifas | `GET /tarifa/listar`, `POST /tarifa/guardar`, `PUT /tarifa/actualizar`, `PATCH /tarifa/estado`, `GET /tarifa/log` |
+| Atención | `GET /atencion/cita`, `POST /atencion/finalizar`, `GET /atencion/prefactura-pdf`, `GET /atencion/formula-pdf` |
+| Fórmulas | `GET /formula-medica/listar`, `GET /formula-medica/consultar`, `PATCH /formula-medica/inactivar`, `GET /formula-medica/pdf` |
+| Despacho | `GET /despacho/pendientes`, `GET /despacho/formula`, `PUT /despacho/preparar`, `POST /despacho/confirmar`, `PUT /despacho/sin-disponibilidad`, `PUT /despacho/cancelar`, `PUT /despacho/revertir`, `GET /despacho/historial`, `GET /despacho/comprobante-pdf` |
+| Facturación | `GET /factura/por-facturar`, `GET /factura/previsualizar`, `POST /factura/generar`, `GET /factura/listar`, `GET /factura/consultar`, `POST /factura/pago`, `PUT /factura/anular`, `GET /factura/pdf` |
+| Reportes | `GET /reporte/tipos`, `GET /reporte/datos`, `GET /reporte/excel`, `GET /reporte/pdf` (parámetros `tipo`, `desde`, `hasta`, `agrupacion`, `filtro`) |
+
+### 16.4 Reglas de negocio
+
+**Inventario (R1)**
+- Código de **8 caracteres alfanuméricos**, único. Nombre único.
+- Tipo `MEDICAMENTO` o `UTENSILIO`. El **registro Invima es obligatorio solo para medicamentos**.
+- El precio de venta debe ser mayor a cero y el IVA debe estar entre 0 y 100.
+- Las cantidades no se editan a mano: solo cambian al ingresar lotes, despachar o revertir. Cada cambio queda en `movimiento_inventario`.
+- Alertas: **agotado**, **stock bajo** (disponible menor o igual al stock mínimo), **próximo a vencer** (30 días) y **lote vencido**. Los lotes vencidos no cuentan como disponibles.
+- **Carga masiva** (.csv o .xlsx): primero una vista previa que valida fila por fila y muestra los errores; luego se confirma y solo se importan las filas válidas. Cada fila se guarda en su propia transacción, así que un error no afecta a las demás. Si el código ya existe, la fila agrega un lote nuevo a ese producto. Cada carga queda en `carga_inventario_log`, y desde la pantalla se descarga el informe de errores.
+
+**Agenda y citas (R2)**
+- El médico ve sus citas en un calendario (día, semana y mes), las crea seleccionando horas libres y las reprograma arrastrándolas.
+- No se permiten citas superpuestas del mismo médico (`inicio < finOtra AND fin > inicioOtra`), ni dos citas simultáneas de la misma mascota.
+- La cita debe quedar dentro del **horario de disponibilidad** del médico, y el médico debe estar **activo**.
+- Duración por defecto de 30 minutos y máxima de 240.
+- Reporte Excel de las citas del médico por rango de fechas, e historial de citas de cada mascota.
+- Recepción y administrador siguen usando el módulo de citas anterior, con las mismas validaciones.
+
+**Especialidades y tarifas (R3)**
+- CRUD con activación e inactivación (no se borran).
+- Cada tarifa tiene valor e IVA. Cada creación o cambio queda en `tarifa_log` con el valor y el IVA anteriores y nuevos, y el usuario que lo hizo.
+- Cambiar una tarifa **no cambia** las facturas ya generadas, porque guardan sus propios valores.
+
+**Atención de la cita (R3)**
+- Solo el médico de la cita la puede atender, y solo si la cita es de hoy o de días anteriores y no está cancelada ni atendida.
+- Síntomas y diagnóstico son obligatorios; observaciones y recomendaciones son opcionales. Se elige el servicio prestado (tarifa).
+- La fórmula puede tener varios medicamentos, cada uno con dosis, frecuencia, días, vía de administración y cantidad. Si no hay existencias suficientes se avisa, pero se permite formular (el despacho será parcial).
+- Al finalizar se crean la historia clínica y la fórmula, y la cita pasa a **atendida**. Se pueden imprimir la prefactura y la fórmula en PDF.
+
+**Despacho (R5)**
+- Estados de la fórmula: `PENDIENTE_DESPACHO`, `EN_PREPARACION`, `DESPACHO_PARCIAL`, `DESPACHADO`, `PENDIENTE_DISPONIBILIDAD` y `CANCELADO`. Cada cambio queda en `despacho_estado_log`.
+- Se sugiere tomar primero los lotes que **vencen antes (FEFO)**. Los lotes vencidos no se pueden dispensar.
+- No se puede entregar más de lo pendiente ni más de lo que tiene cada lote. Se permiten entregas parciales.
+- La confirmación es **transaccional**: los lotes se bloquean (bloqueo pesimista) y, si algo falla, no se descuenta nada.
+- Comprobante de despacho en PDF.
+- Solo el **administrador** puede revertir un despacho (con motivo): las cantidades vuelven a los lotes. No se puede revertir si la cita ya está facturada.
+
+**Facturación (R3)**
+- Se factura una cita **atendida** que tenga servicio, una sola vez (salvo que la factura anterior esté anulada).
+- Se cobran el servicio y **solo los medicamentos ya entregados** por el despacho.
+- La factura guarda los **valores históricos** (precio, IVA y descripción al momento de facturar).
+- Solo el administrador puede aplicar descuento.
+- Estados: `PENDIENTE`, `PAGO_PARCIAL`, `PAGADA` y `ANULADA`. Un pago no puede superar el saldo, y los pagos con tarjeta o transferencia exigen referencia.
+- Anulación controlada: solo el administrador, con un motivo de al menos 10 caracteres. La factura no se borra.
+- Todo queda en `factura_log`. La factura se descarga en PDF.
+
+**Reportes (R4)**
+Solo el administrador. Todos tienen vista previa, filtro por fechas y por texto, y descarga en PDF y Excel.
+
+| Categoría | Reportes |
+|---|---|
+| Financiero | Ingresos por período (agrupado por día, mes o año), por consultas y servicios, por especialidad, por veterinario y por venta de medicamentos; facturas por estado; impuestos y descuentos |
+| Inventario | Existencias y valor (costo y venta), alertas, vencimientos, movimientos |
+| Gestión médica | Citas por estado, detalle de citas, consultas por veterinario y por especialidad, mascotas atendidas |
+
+### 16.5 Front (Angular)
+- Login en `/login`; el token y la sesión se guardan en `localStorage`.
+- `interceptors/headers.interceptor.ts` agrega el token a cada petición y, si el backend responde 401, envía al login.
+- Pantallas nuevas en `src/app/demo/pages`: `agenda`, `atencion`, `inventario`, `despacho`, `factura`, `tarifa` (tarifas y especialidades), `reporte`, `usuario` y `login`.
+- Las validaciones se repiten en el front solo para ayudar al usuario; las que mandan son las del backend.
+
+---
+
+## 17. Docker y usuarios de prueba
+
+### 17.1 Ejecutar con Docker
+Los dos repositorios deben estar en la misma carpeta:
+```
+carpeta/
+├── backend-83680/       (tiene docker-compose.yml)
+└── frontend26-83680/
+```
+Desde `backend-83680`:
+```bash
+docker compose up --build
+```
+
+| Servicio | Contenedor | URL |
+|---|---|---|
+| MySQL 8 | `clinica-mysql` | `localhost:3307` (usuario `root`, clave `clinica`) |
+| Backend | `clinica-backend` | `http://localhost:8080/clinica/v1` |
+| Frontend | `clinica-frontend` | `http://localhost:4200` |
+
+- La primera vez, MySQL carga `docker/mysql/01_clinica.sql` (estructura y datos completos). Para empezar de cero: `docker compose down -v`.
+- El backend toma la conexión de las variables `SPRING_DATASOURCE_URL`, `SPRING_DATASOURCE_USERNAME` y `SPRING_DATASOURCE_PASSWORD`.
+
+### 17.2 Ejecutar sin Docker
+1. Ejecutar en MySQL los scripts de la sección 16.1.
+2. Backend: `./mvnw spring-boot:run` (configurar la clave de MySQL en `application-dev.properties`).
+3. Frontend: `npm install` y luego `npm start` (abre en `http://localhost:4200`).
+
+### 17.3 Swagger
+`http://localhost:8080/clinica/v1/swagger-ui/index.html`
+
+Para probar las rutas protegidas: hacer `POST /auth/login`, copiar el `token`, pulsar **Authorize** y pegarlo.
+
+### 17.4 Usuarios de prueba
+Todos con la contraseña **`Clinica2026*`**:
+
+| Usuario | Perfil | Uso |
+|---|---|---|
+| `admin` | Administrador | Todo el sistema, reportes, anulación de facturas y reversión de despachos |
+| `recepcion` | Recepción | Citas, clientes, mascotas y facturación |
+| `medico` | Médico (Carlos Martínez Ruiz) | Agenda, atención y fórmulas |
+| `medico2` | Médico (Giovanni Mora) | Agenda de otro médico |
+| `despacho` | DESPACHO_MEDICO | Despacho de medicamentos e inventario en consulta |
+
+### 17.5 Flujo de prueba recomendado
+1. `medico` → Mi agenda → abrir la cita → **Atender cita**: diagnóstico y fórmula → Finalizar.
+2. `despacho` → Despacho → la fórmula aparece pendiente → confirmar la entrega (FEFO; si falta stock queda parcial).
+3. `recepcion` → Facturación → la atención aparece por facturar → vista previa → generar → registrar pago.
+4. `admin` → Reportes en PDF o Excel; Despacho → revertir; Facturación → anular.
+5. `admin` → Medicamentos → Carga masiva con `docs/evidencias/carga_inventario_64_registros.csv` (60 filas válidas y 4 con error).
