@@ -2,6 +2,7 @@ package com.uniminuto.clinica.repository;
 
 import com.uniminuto.clinica.entity.Cita;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
@@ -30,24 +31,38 @@ public interface CitaRepository extends JpaRepository<Cita, Long> {
     List<Cita> findAllByOrderByFechaHoraDesc();
 
     /**
-     * Citas de un medico dentro de un rango de tiempo (para validar choques de horario).
+     * Citas activas de un medico que se cruzan con el horario [inicio, fin).
      *
      * @param medicoId id del medico.
-     * @param inicio   inicio del rango.
-     * @param fin      fin del rango.
-     * @return citas del medico en ese rango.
+     * @param inicio   inicio de la cita nueva.
+     * @param fin      fin de la cita nueva.
+     * @return citas que se superponen.
      */
-    List<Cita> findByMedicoIdAndFechaHoraBetween(Long medicoId, LocalDateTime inicio, LocalDateTime fin);
+    @Query("SELECT c FROM Cita c WHERE c.medico.id = :medicoId AND c.estado <> 'cancelada' "
+            + "AND c.fechaHora < :fin AND c.fechaHoraFin > :inicio")
+    List<Cita> findCrucesMedico(Long medicoId, LocalDateTime inicio, LocalDateTime fin);
 
     /**
-     * Citas de una mascota dentro de un rango de tiempo (para validar citas simultaneas).
+     * Citas activas de una mascota que se cruzan con el horario [inicio, fin).
      *
      * @param mascotaId id de la mascota.
-     * @param inicio    inicio del rango.
-     * @param fin       fin del rango.
-     * @return citas de la mascota en ese rango.
+     * @param inicio    inicio de la cita nueva.
+     * @param fin       fin de la cita nueva.
+     * @return citas que se superponen.
      */
-    List<Cita> findByMascotaMascotaIdAndFechaHoraBetween(Integer mascotaId, LocalDateTime inicio, LocalDateTime fin);
+    @Query("SELECT c FROM Cita c WHERE c.mascota.mascotaId = :mascotaId AND c.estado <> 'cancelada' "
+            + "AND c.fechaHora < :fin AND c.fechaHoraFin > :inicio")
+    List<Cita> findCrucesMascota(Integer mascotaId, LocalDateTime inicio, LocalDateTime fin);
+
+    /**
+     * Citas de un medico en un rango (para el calendario y el reporte).
+     *
+     * @param medicoId id del medico.
+     * @param inicio   desde.
+     * @param fin      hasta.
+     * @return citas ordenadas por fecha.
+     */
+    List<Cita> findByMedicoIdAndFechaHoraBetweenOrderByFechaHoraAsc(Long medicoId, LocalDateTime inicio, LocalDateTime fin);
 
     /**
      * Citas de una mascota, de la mas reciente a la mas antigua.

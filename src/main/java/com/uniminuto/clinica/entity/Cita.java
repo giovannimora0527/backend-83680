@@ -66,4 +66,8 @@ public class Cita {
      */
     @Column(name = "motivo", columnDefinition = "TEXT")
     private String motivo;
+
+    /** Fecha y hora en que termina la cita. */
+    @Column(name = "fecha_hora_fin")
+    private LocalDateTime fechaHoraFin;
 }

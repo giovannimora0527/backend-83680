@@ -69,4 +69,12 @@ public class Medico {
     @JoinColumn(name = "especializacion_id", nullable = false)
     private Especializacion especializacion;
 
+
+    /** Usuario con el que el medico ingresa al sistema (puede ser nulo). */
+    @Column(name = "usuario_id")
+    private Long usuarioId;
+
+    /** Si el medico esta activo (a un medico inactivo no se le asignan citas). */
+    @Column(name = "activo", nullable = false)
+    private Boolean activo = true;
 }

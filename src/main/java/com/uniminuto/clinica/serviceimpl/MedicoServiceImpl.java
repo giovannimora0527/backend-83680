@@ -103,6 +103,10 @@ public class MedicoServiceImpl implements MedicoService {
         medico.setTelefono(medicoRq.getTelefono());
         medico.setRegistroProfesional(medicoRq.getRegistroProfesional().trim().toUpperCase());
         medico.setEspecializacion(optEspecializacion.get());
+        if (medicoRq.getActivo() != null) {
+            medico.setActivo(medicoRq.getActivo());
+        }
+        medico.setUsuarioId(medicoRq.getUsuarioId());
     }
 
     /**

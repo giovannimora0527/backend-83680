@@ -1,6 +1,8 @@
 package com.uniminuto.clinica.api;
 
+import com.uniminuto.clinica.entity.HorarioMedico;
 import com.uniminuto.clinica.entity.Medico;
+import org.springframework.web.bind.annotation.RequestParam;
 import com.uniminuto.clinica.models.MedicoRq;
 import com.uniminuto.clinica.models.MiRespuestaRS;
 import org.springframework.http.ResponseEntity;
@@ -50,4 +52,23 @@ public interface MedicoApi {
             produces = {"application/json"},
             consumes = {"application/json"})
     ResponseEntity<MiRespuestaRS> actualizarMedico(@RequestBody MedicoRq medicoRq);
+
+    /**
+     * Horarios de disponibilidad de un medico.
+     *
+     * @param medicoId id del medico.
+     * @return horarios.
+     */
+    @GetMapping(value = "/horarios", produces = {"application/json"})
+    ResponseEntity<List<HorarioMedico>> listarHorarios(@RequestParam Long medicoId);
+
+    /**
+     * Reemplaza los horarios de un medico (solo administrador).
+     *
+     * @param medicoId id del medico.
+     * @param horarios horarios nuevos.
+     * @return respuesta de exito.
+     */
+    @PutMapping(value = "/horarios", produces = {"application/json"}, consumes = {"application/json"})
+    ResponseEntity<MiRespuestaRS> guardarHorarios(@RequestParam Long medicoId, @RequestBody List<HorarioMedico> horarios);
 }

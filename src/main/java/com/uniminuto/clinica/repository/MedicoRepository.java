@@ -52,4 +52,12 @@ public interface MedicoRepository extends JpaRepository<Medico, Long> {
      * @return true si existe.
      */
     boolean existsByRegistroProfesionalAndIdNot(String registroProfesional, Long id);
+
+    /**
+     * Busca el medico asociado a un usuario.
+     *
+     * @param usuarioId id del usuario.
+     * @return el medico si existe.
+     */
+    java.util.Optional<Medico> findByUsuarioId(Long usuarioId);
 }

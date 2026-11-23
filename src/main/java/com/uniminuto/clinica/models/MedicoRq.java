@@ -23,4 +23,8 @@ public class MedicoRq {
     private String registroProfesional;
     /** Id de la especializacion. */
     private Long especializacionId;
+    /** Si el medico esta activo. */
+    private Boolean activo;
+    /** Usuario asociado (opcional). */
+    private Long usuarioId;
 }

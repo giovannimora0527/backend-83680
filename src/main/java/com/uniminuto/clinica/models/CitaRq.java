@@ -44,4 +44,6 @@ public class CitaRq {
      * Motivo de la consulta.
      */
     private String motivo;
+    /** Fecha y hora de fin (si no se envia, la cita dura 30 minutos). */
+    private LocalDateTime fechaHoraFin;
 }
