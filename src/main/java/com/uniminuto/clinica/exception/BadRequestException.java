@@ -23,6 +23,17 @@ public class BadRequestException extends RuntimeException {
     }
 
     /**
+     * Constructor con un estado HTTP distinto (401, 403, 404...).
+     *
+     * @param message mensaje para el usuario.
+     * @param status  estado HTTP.
+     */
+    public BadRequestException(String message, HttpStatus status) {
+        super(message);
+        this.status = status;
+    }
+
+    /**
      * Obtiene el estado HTTP asociado a la excepción.
      *
      * @return el estado HTTP (siempre 400 Bad Request).

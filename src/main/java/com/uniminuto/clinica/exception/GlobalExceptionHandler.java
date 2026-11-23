@@ -27,7 +27,7 @@ public class GlobalExceptionHandler {
 
         ErrorResponse error = new ErrorResponse(
                 ex.getStatus().value(),
-                "BAD REQUEST",
+                ex.getStatus().getReasonPhrase().toUpperCase(),
                 ex.getMessage()
         );
 
