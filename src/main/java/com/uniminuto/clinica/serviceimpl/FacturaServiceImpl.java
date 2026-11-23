@@ -85,7 +85,7 @@ public class FacturaServiceImpl implements FacturaService {
     public List<CitaRs> citasPorFacturar() {
         return citaRepository.findAllByOrderByFechaHoraDesc().stream()
                 .filter(c -> "atendida".equals(c.getEstado()))
-                .filter(c -> historiaRepository.existsByCitaId(c.getId()))
+                .filter(c -> historiaRepository.findByCitaId(c.getId()).stream().anyMatch(h -> h.getTarifa() != null))
                 .filter(c -> !facturaRepository.existsByCitaIdAndEstadoNot(c.getId(), Factura.ANULADA))
                 .map(citaService::convertirCita).toList();
     }

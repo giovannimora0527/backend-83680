@@ -46,7 +46,7 @@ INSERT INTO menu VALUES
  (8,'medicos','Gestión de Medicos','/inicio/medicos','fa-solid fa-user-doctor',1,'2026-01-01 00:00:00',NULL),
  (9,'usuarios','Gestión de Usuarios','/inicio/usuarios','feather icon-users',1,'2026-01-01 00:00:00',NULL),
  (10,'agenda','Mi agenda','/inicio/agenda','feather icon-calendar',1,'2026-01-01 00:00:00',NULL),
- (11,'tarifas','Tarifas y servicios','/inicio/tarifas','feather icon-dollar-sign',1,'2026-01-01 00:00:00',NULL),
+ (11,'tarifas','Tarifas y servicios','/inicio/tarifas','fa-solid fa-tags',1,'2026-01-01 00:00:00',NULL),
  (12,'facturas','Facturación','/inicio/facturas','feather icon-file-text',1,'2026-01-01 00:00:00',NULL),
  (13,'reportes','Reportes','/inicio/reportes','feather icon-bar-chart-2',1,'2026-01-01 00:00:00',NULL),
  (14,'despacho','Despacho de medicamentos','/inicio/despacho','feather icon-package',1,'2026-01-01 00:00:00',NULL);
