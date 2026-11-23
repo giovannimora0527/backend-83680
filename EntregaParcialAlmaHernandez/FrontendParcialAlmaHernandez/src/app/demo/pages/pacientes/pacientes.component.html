@@ -1,0 +1,53 @@
+
+<div class="row">
+  <div class="col-xl-12">
+    <div class="card">
+      <div class="card-header">
+        <h5>Gestión de Pacientes</h5>
+        <span>Listado de pacientes registrados en la clínica</span>
+      </div>
+
+      <div class="card-body">
+        <p *ngIf="cargando">Cargando pacientes...</p>
+
+        <div *ngIf="error" class="alert alert-danger">
+          {{ error }}
+        </div>
+
+        <div class="table-responsive" *ngIf="!cargando && !error">
+          <table class="table table-hover">
+            <thead>
+              <tr>
+                <th>Documento</th>
+                <th>Nombres</th>
+                <th>Apellidos</th>
+                <th>Fecha de nacimiento</th>
+                <th>Género</th>
+                <th>Teléfono</th>
+                <th>Dirección</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              <tr *ngFor="let paciente of pacientes">
+                <td>{{ paciente.tipoDocumento }} {{ paciente.numeroDocumento }}</td>
+                <td>{{ paciente.nombres }}</td>
+                <td>{{ paciente.apellidos }}</td>
+                <td>{{ paciente.fechaNacimiento }}</td>
+                <td>{{ paciente.genero }}</td>
+                <td>{{ paciente.telefono }}</td>
+                <td>{{ paciente.direccion }}</td>
+              </tr>
+
+              <tr *ngIf="pacientes.length === 0">
+                <td colspan="7" class="text-center">
+                  No hay pacientes registrados.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

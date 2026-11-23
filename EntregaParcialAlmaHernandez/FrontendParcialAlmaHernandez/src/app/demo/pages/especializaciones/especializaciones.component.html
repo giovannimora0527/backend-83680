@@ -1,0 +1,80 @@
+
+<div class="container-fluid">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h2>Especializaciones</h2>
+      <p class="text-muted mb-0">
+        Consulta las especializaciones registradas.
+      </p>
+    </div>
+
+    <button
+      type="button"
+      class="btn btn-primary"
+      (click)="listarEspecializaciones()"
+      [disabled]="cargando">
+      {{ cargando ? 'Cargando...' : 'Actualizar listado' }}
+    </button>
+  </div>
+
+  <div *ngIf="error" class="alert alert-danger" role="alert">
+    {{ error }}
+  </div>
+
+  <div class="card mb-4">
+    <div class="card-body">
+      <label for="buscarEspecializacion" class="form-label">
+        Buscar especialización
+      </label>
+
+      <input
+        id="buscarEspecializacion"
+        type="text"
+        class="form-control"
+        placeholder="Buscar por código, nombre o descripción..."
+        [(ngModel)]="busqueda"
+        (ngModelChange)="filtrarEspecializaciones()">
+
+      <p class="text-muted mt-3 mb-0">
+        Registros encontrados: {{ especializacionesFiltradas.length }}
+      </p>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-body">
+      <div *ngIf="cargando" class="text-center p-4">
+        Cargando especializaciones...
+      </div>
+
+      <div
+        *ngIf="!cargando && !error && especializacionesFiltradas.length === 0"
+        class="alert alert-info mb-0">
+        No se encontraron especializaciones.
+      </div>
+
+      <div
+        *ngIf="!cargando && especializacionesFiltradas.length > 0"
+        class="table-responsive">
+        <table class="table table-hover align-middle">
+          <thead>
+            <tr>
+              <th
+                *ngFor="let campo of Object.keys(especializacionesFiltradas[0])">
+                {{ campo }}
+              </th>
+            </tr>
+          </thead>
+
+          <tbody>
+            <tr *ngFor="let especializacion of especializacionesFiltradas">
+              <td *ngFor="let campo of Object.keys(especializacion)">
+                {{ especializacion[campo] }}
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>

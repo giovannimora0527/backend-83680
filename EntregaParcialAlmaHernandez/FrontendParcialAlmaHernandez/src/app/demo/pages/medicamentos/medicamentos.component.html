@@ -1,0 +1,259 @@
+
+<div class="row">
+  <div class="col-12">
+    <div class="card">
+      <div class="card-header">
+        <h5>Gestión de medicamentos</h5>
+        <p class="text-muted mb-0">
+          Consulta, registra y actualiza los medicamentos de la clínica.
+        </p>
+      </div>
+
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+          <h6 class="mb-0">Listado de medicamentos</h6>
+
+          <div class="d-flex gap-2">
+            <button
+              type="button"
+              class="btn btn-success"
+              (click)="nuevoMedicamento()">
+              Registrar medicamento
+            </button>
+
+            <button
+              type="button"
+              class="btn btn-primary"
+              (click)="listarMedicamentos()"
+              [disabled]="cargando">
+              Actualizar listado
+            </button>
+          </div>
+        </div>
+
+        <div *ngIf="mensaje" class="alert alert-success">
+          {{ mensaje }}
+        </div>
+
+        <div *ngIf="error" class="alert alert-danger">
+          {{ error }}
+        </div>
+
+        <div *ngIf="cargando" class="alert alert-info">
+          Cargando medicamentos...
+        </div>
+
+        <div
+          *ngIf="!cargando && !error && medicamentos.length === 0"
+          class="alert alert-warning">
+          No hay medicamentos registrados.
+        </div>
+
+        <div
+          *ngIf="!cargando && medicamentos.length > 0"
+          class="table-responsive">
+          <table class="table table-striped table-hover align-middle">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Nombre</th>
+                <th>Descripción</th>
+                <th>Presentación</th>
+                <th>Fecha de compra</th>
+                <th>Fecha de vencimiento</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              <tr *ngFor="let medicamento of medicamentos">
+                <td>{{ medicamento.id }}</td>
+                <td>{{ medicamento.nombre }}</td>
+                <td>{{ medicamento.descripcion || 'Sin descripción' }}</td>
+                <td>{{ medicamento.presentacion || 'Sin presentación' }}</td>
+                <td>{{ medicamento.fechaCompra || '—' }}</td>
+                <td>{{ medicamento.fechaVence || '—' }}</td>
+                <td>
+                  <button
+                    type="button"
+                    class="btn btn-sm btn-outline-primary"
+                    (click)="editarMedicamento(medicamento)">
+                    Editar
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="text-muted mt-3">
+          Total de medicamentos: {{ medicamentos.length }}
+        </div>
+
+        <div *ngIf="mostrarFormulario" class="card mt-4">
+          <div class="card-header">
+            <h5 class="mb-0">
+              {{ editando ? 'Editar medicamento' : 'Registrar medicamento' }}
+            </h5>
+          </div>
+
+          <div class="card-body">
+            <form (ngSubmit)="guardarMedicamento()">
+              <div class="row">
+                <div class="col-md-6 mb-3">
+                  <label for="nombre" class="form-label">
+                    Nombre *
+                  </label>
+                  <input
+                    id="nombre"
+                    name="nombre"
+                    type="text"
+                    class="form-control"
+                    [(ngModel)]="formulario.nombre"
+                    required
+                    maxlength="100">
+                </div>
+
+                <div class="col-md-6 mb-3">
+                  <label for="presentacion" class="form-label">
+                    Presentación *
+                  </label>
+                  <input
+                    id="presentacion"
+                    name="presentacion"
+                    type="text"
+                    class="form-control"
+                    [(ngModel)]="formulario.presentacion"
+                    required
+                    maxlength="100"
+                    placeholder="Ej. Tabletas 500 mg">
+                </div>
+
+                <div class="col-md-4 mb-3">
+                  <label for="codigo" class="form-label">Código (8 caracteres) *</label>
+                  <input id="codigo" name="codigo" type="text" maxlength="8"
+                    class="form-control" [(ngModel)]="formulario.codigo" required>
+                </div>
+
+                <div class="col-md-4 mb-3">
+                  <label for="tipoProducto" class="form-label">Tipo *</label>
+                  <select id="tipoProducto" name="tipoProducto" class="form-control"
+                    [(ngModel)]="formulario.tipoProducto" required>
+                    <option value="MEDICAMENTO">Medicamento</option>
+                    <option value="UTENSILIO">Utensilio</option>
+                  </select>
+                </div>
+
+                <div class="col-md-4 mb-3">
+                  <label for="registroInvima" class="form-label">Registro Invima</label>
+                  <input id="registroInvima" name="registroInvima" type="text"
+                    class="form-control" [(ngModel)]="formulario.registroInvima"
+                    [required]="formulario.tipoProducto === 'MEDICAMENTO'">
+                </div>
+
+                <div class="col-md-4 mb-3">
+                  <label for="precioCompra" class="form-label">Precio de compra</label>
+                  <input id="precioCompra" name="precioCompra" type="number" min="0" step="0.01"
+                    class="form-control" [(ngModel)]="formulario.precioCompra">
+                </div>
+
+                <div class="col-md-4 mb-3">
+                  <label for="precioVenta" class="form-label">Precio de venta</label>
+                  <input id="precioVenta" name="precioVenta" type="number" min="0" step="0.01"
+                    class="form-control" [(ngModel)]="formulario.precioVenta">
+                </div>
+
+                <div class="col-md-4 mb-3">
+                  <label for="cantidadActual" class="form-label">Cantidad actual</label>
+                  <input id="cantidadActual" name="cantidadActual" type="number" min="0" step="0.001"
+                    class="form-control" [(ngModel)]="formulario.cantidadActual">
+                </div>
+
+                <div class="col-md-4 mb-3">
+                  <label for="stockMinimo" class="form-label">Stock mínimo</label>
+                  <input id="stockMinimo" name="stockMinimo" type="number" min="0" step="0.001"
+                    class="form-control" [(ngModel)]="formulario.stockMinimo">
+                </div>
+
+                <div class="col-md-4 mb-3">
+                  <label for="fechaIngreso" class="form-label">Fecha de ingreso</label>
+                  <input id="fechaIngreso" name="fechaIngreso" type="date"
+                    class="form-control" [(ngModel)]="formulario.fechaIngreso">
+                </div>
+
+                <div class="col-md-4 mb-3">
+                  <label for="fechaProximoPedido" class="form-label">Próximo pedido</label>
+                  <input id="fechaProximoPedido" name="fechaProximoPedido" type="date"
+                    class="form-control" [(ngModel)]="formulario.fechaProximoPedido">
+                </div>
+
+                <div class="col-12 mb-3">
+                  <label for="descripcion" class="form-label">
+                    Descripción *
+                  </label>
+                  <textarea
+                    id="descripcion"
+                    name="descripcion"
+                    class="form-control"
+                    rows="3"
+                    [(ngModel)]="formulario.descripcion"
+                    required
+                    placeholder="Descripción del medicamento">
+                  </textarea>
+                </div>
+
+                <div class="col-md-6 mb-3">
+                  <label for="fechaCompra" class="form-label">
+                    Fecha de compra *
+                  </label>
+                  <input
+                    id="fechaCompra"
+                    name="fechaCompra"
+                    type="date"
+                    class="form-control"
+                    [(ngModel)]="formulario.fechaCompra"
+                    required>
+                </div>
+
+                <div class="col-md-6 mb-3">
+                  <label for="fechaVence" class="form-label">
+                    Fecha de vencimiento *
+                  </label>
+                  <input
+                    id="fechaVence"
+                    name="fechaVence"
+                    type="date"
+                    class="form-control"
+                    [(ngModel)]="formulario.fechaVence"
+                    [min]="formulario.fechaCompra || null"
+                    required>
+                </div>
+              </div>
+
+              <p class="text-muted">
+                * Todos los campos son obligatorios.
+              </p>
+
+              <div class="d-flex gap-2">
+                <button
+                  type="submit"
+                  class="btn btn-primary"
+                  [disabled]="guardando">
+                  {{ guardando ? 'Guardando...' : (editando ? 'Guardar cambios' : 'Registrar') }}
+                </button>
+
+                <button
+                  type="button"
+                  class="btn btn-secondary"
+                  (click)="cancelarFormulario()"
+                  [disabled]="guardando">
+                  Cancelar
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

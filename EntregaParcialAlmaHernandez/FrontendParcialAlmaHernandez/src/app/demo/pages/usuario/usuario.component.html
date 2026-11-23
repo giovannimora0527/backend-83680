@@ -1,0 +1,134 @@
+
+<div class="container-fluid">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h2>Gestión de Usuarios</h2>
+      <p class="text-muted mb-0">
+        Consulta y filtra los usuarios registrados en el sistema.
+      </p>
+    </div>
+
+    <button
+      type="button"
+      class="btn btn-primary"
+      (click)="cargarUsuarios()"
+      [disabled]="cargando">
+      {{ cargando ? 'Cargando...' : 'Actualizar listado' }}
+    </button>
+  </div>
+
+  <div *ngIf="error" class="alert alert-danger" role="alert">
+    {{ error }}
+  </div>
+
+  <div class="card mb-4">
+    <div class="card-body">
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label for="buscarUsuario" class="form-label">
+            Buscar usuario
+          </label>
+
+          <input
+            id="buscarUsuario"
+            type="text"
+            class="form-control"
+            placeholder="Buscar por usuario, correo, rol o ID..."
+            [(ngModel)]="busqueda"
+            (ngModelChange)="filtrarUsuarios()">
+        </div>
+
+        <div class="col-md-3">
+          <label for="filtrarRol" class="form-label">
+            Filtrar por rol
+          </label>
+
+          <select
+            id="filtrarRol"
+            class="form-select"
+            [(ngModel)]="rolSeleccionado"
+            (ngModelChange)="filtrarUsuarios()">
+            <option value="">Todos los roles</option>
+            <option *ngFor="let rol of obtenerRoles()" [value]="rol">
+              {{ rol }}
+            </option>
+          </select>
+        </div>
+
+        <div class="col-md-3">
+          <label for="filtrarEstado" class="form-label">
+            Filtrar por estado
+          </label>
+
+          <select
+            id="filtrarEstado"
+            class="form-select"
+            [(ngModel)]="estadoSeleccionado"
+            (ngModelChange)="filtrarUsuarios()">
+            <option value="">Todos los estados</option>
+            <option value="true">Activo</option>
+            <option value="false">Inactivo</option>
+          </select>
+        </div>
+      </div>
+
+      <p class="text-muted mt-3 mb-0">
+        Usuarios encontrados: {{ usuariosFiltrados.length }}
+      </p>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-body">
+      <div *ngIf="cargando" class="text-center p-4">
+        Cargando usuarios...
+      </div>
+
+      <div
+        *ngIf="!cargando && !error && usuariosFiltrados.length === 0"
+        class="alert alert-info mb-0">
+        No se encontraron usuarios.
+      </div>
+
+      <div
+        *ngIf="!cargando && usuariosFiltrados.length > 0"
+        class="table-responsive">
+        <table class="table table-hover align-middle">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Nombre de usuario</th>
+              <th>Correo electrónico</th>
+              <th>Rol</th>
+              <th>Fecha de creación</th>
+              <th>Estado</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            <tr *ngFor="let usuario of usuariosFiltrados">
+              <td>{{ usuario.id ?? '—' }}</td>
+              <td>{{ usuario.username ?? '—' }}</td>
+              <td>{{ usuario.email ?? '—' }}</td>
+              <td>{{ usuario.rol ?? '—' }}</td>
+              <td>
+                {{
+                  usuario.fechaCreacion
+                    ? (usuario.fechaCreacion | date:'dd/MM/yyyy HH:mm')
+                    : '—'
+                }}
+              </td>
+              <td>
+                <span
+                  class="badge"
+                  [ngClass]="usuario.activo ? 'bg-success' : 'bg-secondary'">
+                  {{ usuario.activo ? 'Activo' : 'Inactivo' }}
+                </span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>

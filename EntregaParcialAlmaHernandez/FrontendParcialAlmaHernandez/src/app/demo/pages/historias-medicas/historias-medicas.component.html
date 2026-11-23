@@ -1,0 +1,407 @@
+
+<div class="historias-page">
+
+  <header class="page-header">
+    <div class="header-icon">
+      <i class="feather icon-activity"></i>
+    </div>
+    <div>
+      <h2>Historias médicas</h2>
+      <p>Consulta y administra las historias clínicas de los pacientes.</p>
+    </div>
+  </header>
+
+  <div
+    *ngIf="mensaje"
+    class="alert-message"
+    [ngClass]="'alert-' + tipoMensaje"
+    role="status"
+  >
+    <span>{{ mensaje }}</span>
+    <button
+      type="button"
+      class="close-message"
+      aria-label="Cerrar mensaje"
+      (click)="mensaje = ''"
+    >
+      &times;
+    </button>
+  </div>
+
+  <!-- Registrar historia médica -->
+  <section class="panel">
+    <div class="panel-heading">
+      <div>
+        <h3>Registrar historia médica</h3>
+        <p>Asocia una nueva historia con un paciente existente.</p>
+      </div>
+      <span class="section-number">01</span>
+    </div>
+
+    <form (ngSubmit)="guardarHistoria()" class="form-grid">
+      <div class="field">
+        <label for="pacienteId">Paciente</label>
+
+        <select
+          id="pacienteId"
+          name="pacienteId"
+          [(ngModel)]="pacienteId"
+          required
+        >
+          <option [ngValue]="null" disabled>
+            Selecciona un paciente
+          </option>
+
+          <option
+            *ngFor="let paciente of pacientes"
+            [ngValue]="paciente.id"
+          >
+            {{ nombrePaciente(paciente) }} — ID {{ paciente.id }}
+          </option>
+        </select>
+
+        <small *ngIf="cargandoPacientes">
+          Cargando pacientes...
+        </small>
+
+        <small *ngIf="!cargandoPacientes && pacientes.length === 0">
+          No hay pacientes disponibles. Verifica que el backend esté funcionando.
+        </small>
+
+        <small *ngIf="!cargandoPacientes && pacientes.length > 0">
+          Selecciona al paciente al que pertenece la historia médica.
+        </small>
+      </div>
+
+      <div class="form-action">
+        <button
+          type="submit"
+          class="btn btn-primary"
+          [disabled]="guardandoHistoria || cargandoPacientes || pacientes.length === 0"
+        >
+          <span *ngIf="!guardandoHistoria">Guardar historia</span>
+          <span *ngIf="guardandoHistoria">Guardando...</span>
+        </button>
+      </div>
+    </form>
+  </section>
+
+  <!-- Registrar anotación médica -->
+  <section class="panel">
+    <div class="panel-heading">
+      <div>
+        <h3>Registrar anotación médica</h3>
+        <p>Selecciona una historia y un médico, y registra la anotación.</p>
+      </div>
+      <span class="section-number">02</span>
+    </div>
+
+    <form (ngSubmit)="guardarAnotacion()" class="form-grid">
+
+      <div class="field">
+        <label for="historiaAnotacionId">Historia médica</label>
+
+        <select
+          id="historiaAnotacionId"
+          name="historiaAnotacionId"
+          [(ngModel)]="historiaAnotacionId"
+          required
+        >
+          <option [ngValue]="null" disabled>
+            Selecciona una historia médica
+          </option>
+
+          <option
+            *ngFor="let historia of historias"
+            [ngValue]="historia.id"
+          >
+            Historia #{{ historia.id }} — Paciente #{{ historia.pacienteId }}
+            — {{ historia.fechaCreacion | date:'dd/MM/yyyy' }}
+          </option>
+        </select>
+
+        <small *ngIf="cargando">
+          Cargando historias médicas...
+        </small>
+
+        <small *ngIf="!cargando && historias.length === 0">
+          No hay historias disponibles. Consulta otro rango de fechas.
+        </small>
+
+        <small *ngIf="!cargando && historias.length > 0">
+          Selecciona la historia a la que pertenece la anotación.
+        </small>
+      </div>
+
+      <div class="field">
+        <label for="medicoAnotacionId">Médico responsable</label>
+
+        <select
+          id="medicoAnotacionId"
+          name="medicoAnotacionId"
+          [(ngModel)]="medicoAnotacionId"
+          required
+        >
+          <option [ngValue]="null" disabled>
+            Selecciona un médico
+          </option>
+
+          <option
+            *ngFor="let medico of medicos"
+            [ngValue]="medico.id"
+          >
+            {{ nombreMedico(medico) }} — ID {{ medico.id }}
+          </option>
+        </select>
+
+        <small *ngIf="cargandoMedicos">
+          Cargando médicos...
+        </small>
+
+        <small *ngIf="!cargandoMedicos && medicos.length === 0">
+          No hay médicos disponibles. Verifica que el backend esté funcionando.
+        </small>
+
+        <small *ngIf="!cargandoMedicos && medicos.length > 0">
+          Selecciona el médico que registra la anotación.
+        </small>
+      </div>
+
+      <div class="field full-width">
+        <label for="descripcionNuevaAnotacion">
+          Descripción de la anotación
+        </label>
+
+        <textarea
+          id="descripcionNuevaAnotacion"
+          name="descripcionNuevaAnotacion"
+          [(ngModel)]="descripcionNuevaAnotacion"
+          placeholder="Escribe aquí la descripción de la anotación médica..."
+          rows="4"
+          maxlength="5000"
+          required
+        ></textarea>
+      </div>
+
+      <div class="form-action">
+        <button
+          type="submit"
+          class="btn btn-primary"
+          [disabled]="
+            guardandoAnotacion ||
+            cargando ||
+            cargandoMedicos ||
+            historias.length === 0 ||
+            medicos.length === 0
+          "
+        >
+          <span *ngIf="!guardandoAnotacion">Guardar anotación</span>
+          <span *ngIf="guardandoAnotacion">Guardando...</span>
+        </button>
+      </div>
+
+    </form>
+  </section>
+
+  <!-- Consultar historias -->
+  <section class="panel">
+    <div class="panel-heading">
+      <div>
+        <h3>Consultar historias</h3>
+        <p>Selecciona el intervalo de fechas de creación.</p>
+      </div>
+      <span class="section-number">03</span>
+    </div>
+
+    <form (ngSubmit)="listarHistorias()" class="filters-grid">
+      <div class="field">
+        <label for="fechaIni">Fecha inicial</label>
+        <input
+          id="fechaIni"
+          name="fechaIni"
+          type="datetime-local"
+          [(ngModel)]="fechaIni"
+          required
+        />
+      </div>
+
+      <div class="field">
+        <label for="fechaFin">Fecha final</label>
+        <input
+          id="fechaFin"
+          name="fechaFin"
+          type="datetime-local"
+          [(ngModel)]="fechaFin"
+          required
+        />
+      </div>
+
+      <div class="filter-action">
+        <button
+          type="submit"
+          class="btn btn-primary"
+          [disabled]="cargando"
+        >
+          <span *ngIf="!cargando">Buscar historias</span>
+          <span *ngIf="cargando">Consultando...</span>
+        </button>
+      </div>
+    </form>
+  </section>
+
+  <!-- Resultados -->
+  <section class="results-section">
+    <div class="results-heading">
+      <div>
+        <h3>Resultados de la consulta</h3>
+        <p>Historias y anotaciones registradas.</p>
+      </div>
+
+      <span class="results-count">
+        {{ historias.length }}
+        {{ historias.length === 1 ? 'historia' : 'historias' }}
+      </span>
+    </div>
+
+    <div *ngIf="cargando" class="empty-state">
+      <div class="loading-spinner"></div>
+      <p>Consultando historias médicas...</p>
+    </div>
+
+    <div
+      *ngIf="!cargando && historias.length === 0"
+      class="empty-state"
+    >
+      <div class="empty-icon">
+        <i class="feather icon-clipboard"></i>
+      </div>
+      <h4>No hay historias para mostrar</h4>
+      <p>Prueba con otro rango de fechas o registra una historia nueva.</p>
+    </div>
+
+    <article
+      *ngFor="let historia of historias"
+      class="history-card"
+    >
+      <div class="history-header">
+        <div class="history-title">
+          <span class="history-icon">
+            <i class="feather icon-file-text"></i>
+          </span>
+
+          <div>
+            <h4>Historia médica #{{ historia.id }}</h4>
+            <p>Paciente #{{ historia.pacienteId }}</p>
+          </div>
+        </div>
+
+        <span class="history-date">
+          {{ historia.fechaCreacion | date:'dd/MM/yyyy HH:mm' }}
+        </span>
+      </div>
+
+      <div class="history-details">
+        <div class="detail-item">
+          <span class="detail-label">ID de historia</span>
+          <strong>{{ historia.id }}</strong>
+        </div>
+
+        <div class="detail-item">
+          <span class="detail-label">ID del paciente</span>
+          <strong>{{ historia.pacienteId }}</strong>
+        </div>
+
+        <div class="detail-item">
+          <span class="detail-label">Anotaciones</span>
+          <strong>{{ historia.anotaciones?.length ?? 0 }}</strong>
+        </div>
+      </div>
+
+      <div class="annotations-section">
+        <div class="annotations-heading">
+          <h5>Anotaciones médicas</h5>
+          <span>{{ historia.anotaciones?.length ?? 0 }}</span>
+        </div>
+
+        <div
+          *ngIf="!historia.anotaciones || historia.anotaciones.length === 0"
+          class="no-annotations"
+        >
+          Esta historia todavía no tiene anotaciones registradas.
+        </div>
+
+        <div
+          *ngFor="let anotacion of historia.anotaciones"
+          class="annotation-card"
+        >
+          <div class="annotation-meta">
+            <span>Anotación #{{ anotacion.id }}</span>
+            <span>Médico #{{ anotacion.medicoId }}</span>
+            <span>{{ anotacion.fecha | date:'dd/MM/yyyy HH:mm' }}</span>
+          </div>
+
+          <ng-container
+            *ngIf="anotacionEditando !== anotacion.id; else editarAnotacion"
+          >
+            <p class="annotation-description">
+              {{ anotacion.descripcion }}
+            </p>
+
+            <button
+              type="button"
+              class="btn btn-outline"
+              (click)="iniciarEdicion(anotacion)"
+            >
+              <i class="feather icon-edit-2"></i>
+              Editar anotación
+            </button>
+          </ng-container>
+
+          <ng-template #editarAnotacion>
+            <form
+              class="edit-form"
+              (ngSubmit)="actualizarAnotacion(anotacion)"
+            >
+              <label [for]="'descripcion-' + anotacion.id">
+                Nueva descripción
+              </label>
+
+              <textarea
+                [id]="'descripcion-' + anotacion.id"
+                name="descripcion-{{ anotacion.id }}"
+                [(ngModel)]="descripcionEditada"
+                rows="4"
+                maxlength="5000"
+                required
+              ></textarea>
+
+              <div class="edit-actions">
+                <button
+                  type="button"
+                  class="btn btn-secondary"
+                  (click)="cancelarEdicion()"
+                  [disabled]="anotacionActualizando === anotacion.id"
+                >
+                  Cancelar
+                </button>
+
+                <button
+                  type="submit"
+                  class="btn btn-primary"
+                  [disabled]="anotacionActualizando === anotacion.id"
+                >
+                  {{
+                    anotacionActualizando === anotacion.id
+                      ? 'Guardando...'
+                      : 'Guardar cambios'
+                  }}
+                </button>
+              </div>
+            </form>
+          </ng-template>
+        </div>
+      </div>
+    </article>
+  </section>
+
+</div>

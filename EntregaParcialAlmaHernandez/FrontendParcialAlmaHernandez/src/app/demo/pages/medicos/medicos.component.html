@@ -1,0 +1,56 @@
+```html
+<div class="row">
+  <div class="col-sm-12">
+    <div class="card">
+      <div class="card-header">
+        <h5>Gestión de Médicos</h5>
+        <p>Listado de médicos registrados en la clínica.</p>
+      </div>
+
+      <div class="card-body">
+        <div *ngIf="cargando" class="text-center p-3">
+          Cargando médicos...
+        </div>
+
+        <div *ngIf="error" class="alert alert-danger">
+          {{ error }}
+        </div>
+
+        <div *ngIf="!cargando && !error">
+          <div class="table-responsive" *ngIf="medicos.length > 0; else sinMedicos">
+            <table class="table table-hover">
+              <thead>
+                <tr>
+                  <th>Documento</th>
+                  <th>Nombres</th>
+                  <th>Apellidos</th>
+                  <th>Teléfono</th>
+                  <th>Registro profesional</th>
+                  <th>Especialización</th>
+                </tr>
+              </thead>
+
+              <tbody>
+                <tr *ngFor="let medico of medicos">
+                  <td>{{ medico.tipoDocumento }} {{ medico.documento }}</td>
+                  <td>{{ medico.nombres }}</td>
+                  <td>{{ medico.apellidos }}</td>
+                  <td>{{ medico.telefono }}</td>
+                  <td>{{ medico.registroProfesional }}</td>
+                  <td>{{ medico.especializacion?.nombre || 'Sin especialización' }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <ng-template #sinMedicos>
+            <div class="alert alert-info mb-0">
+              No hay médicos registrados.
+            </div>
+          </ng-template>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+```

@@ -1,0 +1,252 @@
+
+<div class="container-fluid">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h2 class="mb-1">Fórmulas médicas</h2>
+      <p class="text-muted mb-0">
+        Consulta y registra las fórmulas médicas de las citas.
+      </p>
+    </div>
+
+    <button
+      type="button"
+      class="btn btn-primary"
+      (click)="nuevaFormula()"
+      [disabled]="guardando">
+      Nueva fórmula
+    </button>
+  </div>
+
+  <div *ngIf="mensaje" class="alert alert-success" role="alert">
+    {{ mensaje }}
+  </div>
+
+  <div *ngIf="error" class="alert alert-danger" role="alert">
+    {{ error }}
+  </div>
+
+  <div *ngIf="mostrarFormulario" class="card mb-4">
+    <div class="card-header">
+      <h5 class="mb-0">Registrar fórmula médica</h5>
+    </div>
+
+    <div class="card-body">
+      <div *ngIf="cargandoOpciones" class="alert alert-info">
+        Cargando citas y medicamentos...
+      </div>
+
+      <form
+        (ngSubmit)="guardarFormula()"
+        #formulaForm="ngForm">
+
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <label for="citaId" class="form-label">Seleccionar cita</label>
+
+            <select
+              id="citaId"
+              name="citaId"
+              class="form-select"
+              [(ngModel)]="formulario.citaId"
+              required
+              [disabled]="cargandoOpciones || citas.length === 0"
+              #citaId="ngModel">
+
+              <option [ngValue]="0" disabled>
+                Selecciona una cita
+              </option>
+
+              <option
+                *ngFor="let cita of citas"
+                [ngValue]="cita.id">
+
+                {{ cita.fechaHora | date:'dd/MM/yyyy HH:mm' }}
+                — {{ cita.motivo || 'Consulta veterinaria' }}
+                — Mascota #{{ cita.mascotaId }}
+                — {{ cita.estado }}
+              </option>
+            </select>
+
+            <div
+              *ngIf="!cargandoOpciones && citas.length === 0"
+              class="text-muted small mt-1">
+              No hay citas disponibles en el rango consultado.
+            </div>
+
+            <div
+              *ngIf="citaId.invalid && citaId.touched"
+              class="text-danger small mt-1">
+              Selecciona una cita.
+            </div>
+          </div>
+
+          <div class="col-md-6 mb-3">
+            <label for="medicamentoId" class="form-label">
+              Seleccionar medicamento
+            </label>
+
+            <select
+              id="medicamentoId"
+              name="medicamentoId"
+              class="form-select"
+              [(ngModel)]="formulario.medicamentoId"
+              required
+              [disabled]="cargandoOpciones || medicamentos.length === 0"
+              #medicamentoId="ngModel">
+
+              <option [ngValue]="0" disabled>
+                Selecciona un medicamento
+              </option>
+
+              <option
+                *ngFor="let medicamento of medicamentos"
+                [ngValue]="medicamento.id">
+
+                {{ medicamento.nombre }}
+                <ng-container *ngIf="medicamento.presentacion">
+                  — {{ medicamento.presentacion }}
+                </ng-container>
+              </option>
+            </select>
+
+            <div
+              *ngIf="!cargandoOpciones && medicamentos.length === 0"
+              class="text-muted small mt-1">
+              No hay medicamentos registrados.
+            </div>
+
+            <div
+              *ngIf="medicamentoId.invalid && medicamentoId.touched"
+              class="text-danger small mt-1">
+              Selecciona un medicamento.
+            </div>
+          </div>
+
+          <div class="col-12 mb-3">
+            <label for="dosis" class="form-label">Dosis prescrita</label>
+
+            <input
+              id="dosis"
+              name="dosis"
+              type="text"
+              class="form-control"
+              [(ngModel)]="formulario.dosis"
+              placeholder="Ej. 5 ml cada 8 horas"
+              required
+              #dosis="ngModel">
+
+            <div
+              *ngIf="dosis.invalid && dosis.touched"
+              class="text-danger small mt-1">
+              La dosis es obligatoria.
+            </div>
+          </div>
+
+          <div class="col-12 mb-3">
+            <label for="indicaciones" class="form-label">
+              Indicaciones
+            </label>
+
+            <textarea
+              id="indicaciones"
+              name="indicaciones"
+              class="form-control"
+              [(ngModel)]="formulario.indicaciones"
+              rows="3"
+              placeholder="Escribe las indicaciones para administrar el medicamento"
+              required
+              #indicaciones="ngModel">
+            </textarea>
+
+            <div
+              *ngIf="indicaciones.invalid && indicaciones.touched"
+              class="text-danger small mt-1">
+              Las indicaciones son obligatorias.
+            </div>
+          </div>
+        </div>
+
+        <div class="d-flex gap-2">
+          <button
+            type="submit"
+            class="btn btn-primary"
+            [disabled]="guardando || cargandoOpciones || formulaForm.invalid">
+            {{ guardando ? 'Guardando...' : 'Guardar fórmula' }}
+          </button>
+
+          <button
+            type="button"
+            class="btn btn-outline-secondary"
+            (click)="cancelarFormulario()"
+            [disabled]="guardando">
+            Cancelar
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <h5 class="mb-0">Fórmulas registradas</h5>
+
+      <button
+        type="button"
+        class="btn btn-outline-primary btn-sm"
+        (click)="listarFormulas()"
+        [disabled]="cargando">
+        {{ cargando ? 'Cargando...' : 'Actualizar lista' }}
+      </button>
+    </div>
+
+    <div class="card-body">
+      <div *ngIf="cargando" class="text-center py-4">
+        Cargando fórmulas médicas...
+      </div>
+
+      <div
+        *ngIf="!cargando && formulas.length === 0"
+        class="alert alert-info mb-0">
+        No hay fórmulas médicas registradas.
+      </div>
+
+      <div
+        *ngIf="!cargando && formulas.length > 0"
+        class="table-responsive">
+
+        <table class="table table-hover table-bordered align-middle">
+          <thead class="table-light">
+            <tr>
+              <th>Fecha de registro</th>
+              <th>Cita</th>
+              <th>Medicamento</th>
+              <th>Dosis</th>
+              <th>Indicaciones</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            <tr *ngFor="let formula of formulas">
+              <td>
+                {{ formula.fechaCreacionRegistro
+                  ? (formula.fechaCreacionRegistro | date:'dd/MM/yyyy HH:mm')
+                  : 'Sin fecha' }}
+              </td>
+
+              <td>
+                {{ obtenerDescripcionCita(formula.citaId) }}
+              </td>
+
+              <td>
+                {{ obtenerNombreMedicamento(formula.medicamentoId) }}
+              </td>
+
+              <td>{{ formula.dosis }}</td>
+              <td>{{ formula.indicaciones }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
